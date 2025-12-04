@@ -159,8 +159,8 @@
                     {{ current_user.real_name or current_user.username }} ▼
                 </button>
                 <div class="dropdown-content" id="userDropdown">
-                    <a href="#" onclick="openThemeModal(event)">🎨 显示设置</a>
-                    <a href="{{ url_for('logout') }}">🚪 退出登录</a>
+                    <a href="#" onclick="openThemeModal(event)"><span class="menu-icon">🎨</span> 显示设置</a>
+                    <a href="{{ url_for('logout') }}"><span class="menu-icon">🚪</span> 退出登录</a>
                 </div>
             </div>
             {% else %}
