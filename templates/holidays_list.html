@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2>节假日管理</h2>
+        <button class="action-toggle-btn" onclick="toggleActions()">
+            ☰
+        </button>
+        <div class="action-bar" id="holidayActions">
+            <form action="{{ url_for('holidays_list') }}" method="get">
+                <select name="year" class="form-control" onchange="this.form.submit()" style="width: 120px;">
+                    {% for y in range(2025, 2031) %}
+                    <option value="{{ y }}" {% if y==current_year %}selected{% endif %}>{{ y }}年</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% if current_user.role in ['admin', 'super_admin'] %}
+            <div class="holiday-actions-group">
+                <a href="https://sousuo.www.gov.cn/sousuo/search.shtml?code=17da70961a7&searchBy=title&dataTypeId=15&advance=&searchMode=&searchWord=%E9%83%A8%E5%88%86%E8%8A%82%E5%81%87%E6%97%A5%E5%AE%89%E6%8E%92%E7%9A%84%E9%80%9A%E7%9F%A5"
+                    target="_blank" class="btn-primary">
+                    查看安排
+                </a>
+                <button onclick="openImportModal()" class="btn-primary" id="importBtn">
+                    文字导入
+                </button>
+                <a href="{{ url_for('add_holiday') }}" class="btn-primary">＋ 添加节假日</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">日期</th>
+                    <th style="width: 15%;">星期</th>
+                    <th style="width: 25%;">名称</th>
+                    <th style="width: 15%;">类型</th>
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <th style="width: 25%;">操作</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% if holidays %}
+                {% for holiday in holidays %}
+                <tr>
+                    <td>{{ holiday.date }}</td>
+                    <td>
+                        {% set weekdays = ['一', '二', '三', '四', '五', '六', '日'] %}
+                        周{{ weekdays[holiday.date.weekday()] }}
+                    </td>
+                    <td>{{ holiday.name }}</td>
+                    <td>
+                        {% if holiday.type == 'holiday' %}
+                        <span style="color: #d63031; font-weight: bold;">放假</span>
+                        {% else %}
+                        <span style="color: #27ae60; font-weight: bold;">调休</span>
+                        {% endif %}
+                    </td>
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <td>
+                        <a href="{{ url_for('edit_holiday', id=holiday.id) }}" class="btn-outline"
+                            style="font-size: 0.8rem; padding: 0.3rem 0.8rem; margin-right: 5px;">编辑</a>
+                        <button
+                            onclick='openDeleteModal({{ holiday.id }}, {{ holiday.name|tojson }}, "{{ holiday.date }}")'
+                            class="btn-outline"
+                            style="font-size: 0.8rem; padding: 0.3rem 0.8rem; border-color: #d63031; color: #d63031;">删除</button>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                {% endif %}
+
+                {% if not holidays %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                        暂无本年度节假日数据。
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if current_user.role in ['admin', 'super_admin'] and holidays %}
+    <div style="text-align: right; margin-top: 1rem; padding-right: 1rem; color: #666; font-size: 0.9rem;">
+        本年度记录: <strong style="color: var(--primary-color);">{{ total_count }}</strong> 条
+    </div>
+    {% endif %}
+</div>
+
+<!-- 导入模态框 -->
+<div id="importModal" class="modal"
+    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content-old"
+        style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 600px; border-radius: 8px;">
+        <span class="close" onclick="closeImportModal()"
+            style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h3>📝 导入节假日文字</h3>
+        <p style="color: #666; font-size: 0.9rem;">请将国务院发布的节假日安排文字粘贴到下方（包含“放假”和“上班”等关键词）：</p>
+        <textarea id="importText" rows="10"
+            style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; font-family: inherit;"
+            placeholder="例如：一、元旦：1月1日（周三）放假1天，不调休。"></textarea>
+        <div style="text-align: right; margin-top: 10px;">
+            <button onclick="closeImportModal()" class="btn-outline" style="margin-right: 10px;">取消</button>
+            <button onclick="submitImport()" class="btn-primary" id="submitImportBtn">开始识别并导入</button>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 (新样式) -->
+<div id="deleteModal" class="delete-modal-overlay" style="display: none;">
+    <div class="modal-content-styled">
+        <h3 style="color: #d63031; margin-bottom: 1rem;">⚠️ 确认删除</h3>
+        <p style="margin-bottom: 1.5rem; color: #666;">
+            确定要删除 <strong id="deleteHolidayName"></strong> (<span id="deleteHolidayDate"></span>) 吗？<br>
+            此操作不可恢复！
+        </p>
+        <div style="display: flex; gap: 1rem;">
+            <button type="button" class="btn-outline" onclick="closeDeleteModal()"
+                style="flex: 1; padding: 0.6rem 0;">取消</button>
+            <button onclick="confirmDelete()" class="btn-primary"
+                style="flex: 1; background-color: #d63031; border-color: #d63031; padding: 0.6rem 0;">确认删除</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 新模态框样式 */
+    .delete-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content-styled {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        animation: scaleIn 0.3s ease-out;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0.9);
+            opacity: 0;
+            transform: scale(1);
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+</style>
+
+<script>
+    let currentDeleteId = null;
+
+    function openDeleteModal(id, name, date) {
+        currentDeleteId = id;
+        document.getElementById('deleteHolidayName').innerText = name;
+        document.getElementById('deleteHolidayDate').innerText = date;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        currentDeleteId = null;
+    }
+
+    function confirmDelete() {
+        if (currentDeleteId) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/holidays/delete/' + currentDeleteId;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    function openImportModal() {
+        document.getElementById('importModal').style.display = 'block';
+    }
+
+    function closeImportModal() {
+        document.getElementById('importModal').style.display = 'none';
+    }
+
+    // 点击外部关闭 (使用 addEventListener 避免覆盖 base.html 的逻辑)
+    window.addEventListener('click', function (event) {
+        var importModal = document.getElementById('importModal');
+        var deleteModal = document.getElementById('deleteModal');
+        if (event.target == importModal) {
+            importModal.style.display = "none";
+        }
+        if (event.target == deleteModal) {
+            deleteModal.style.display = "none";
+        }
+    });
+
+    function submitImport() {
+        var text = document.getElementById('importText').value;
+        if (!text.trim()) {
+            alert('请粘贴内容');
+            return;
+        }
+
+        var btn = document.getElementById('submitImportBtn');
+        var originalText = btn.innerText;
+        btn.innerText = '处理中...';
+        btn.disabled = true;
+
+        var formData = new FormData();
+        formData.append('text', text);
+        // Year is now optional, parsed from text. But we can send current_year as fallback.
+        formData.append('year', '{{ current_year }}');
+
+        fetch("{{ url_for('import_holidays_text') }}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('导入失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('请求出错，请稍后重试');
+            })
+            .finally(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    function toggleActions() {
+        var actions = document.getElementById('holidayActions');
+        actions.classList.toggle('show');
+    }
+
+    // Close actions when clicking outside
+    window.addEventListener('click', function (e) {
+        var actions = document.getElementById('holidayActions');
+        var btn = document.querySelector('.action-toggle-btn');
+        if (!actions.contains(e.target) && !btn.contains(e.target) && actions.classList.contains('show')) {
+            actions.classList.remove('show');
+        }
+    });
+</script>
+{% endblock %}

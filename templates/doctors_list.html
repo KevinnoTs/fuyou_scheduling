@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2 style="flex-grow: 1;">医生列表</h2>
+        <button class="action-toggle-btn" onclick="toggleActions()">
+            ☰
+        </button>
+        <div class="action-bar" id="doctorActions">
+            <div class="action-content-wrapper">
+                <form action="{{ url_for('doctors_list') }}" method="get">
+                    <input type="text" name="q" placeholder="搜索医生姓名..." class="form-control"
+                        value="{{ request.args.get('q', '') }}" style="width: 180px;">
+                    <div class="search-btn-group">
+                        <button type="submit" class="btn-primary">搜索</button>
+                        {% if request.args.get('q') %}
+                        <a href="{{ url_for('doctors_list') }}" class="btn-outline"
+                            style="display: flex; align-items: center;">重置</a>
+                        {% endif %}
+                    </div>
+                </form>
+                {% if current_user.role in ['admin', 'super_admin'] %}
+                <a href="{{ url_for('add_doctor') }}" class="btn-primary">＋ 添加医生</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 80px;">头像</th>
+                    <th>姓名</th>
+                    <th>性别</th>
+                    <th>职务</th>
+                    <th>擅长方向</th>
+                    <th>年假 (已休/总计)</th>
+                    <th>状态</th>
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <th>操作</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for doctor in doctors %}
+                <tr {% if current_user.doctor_id==doctor.id %}class="current-user-row" {% endif %}>
+                    <td style="position: relative;">
+                        <div style="position: relative; display: inline-block;">
+                            {% if doctor.avatar_path %}
+                            <img src="{{ url_for('static', filename=doctor.avatar_path) }}" alt="{{ doctor.name }}"
+                                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                            {% else %}
+                            {% set default_avatar = 'images/doctor-male.jpg' if doctor.gender == '男' else
+                            'images/doctor-female.jpg' %}
+                            <img src="{{ url_for('static', filename=default_avatar) }}" alt="{{ doctor.name }}"
+                                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-color);">
+                            {% endif %}
+
+                            {% if current_user.role in ['admin', 'super_admin'] or current_user.doctor_id == doctor.id
+                            %}
+                            <form action="{{ url_for('upload_doctor_avatar', id=doctor.id) }}" method="post"
+                                enctype="multipart/form-data" style="position: absolute; bottom: -5px; right: -5px;">
+                                <label for="avatar-upload-{{ doctor.id }}"
+                                    style="cursor: pointer; background: white; border-radius: 50%; padding: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                    📷
+                                </label>
+                                <input type="file" id="avatar-upload-{{ doctor.id }}" name="avatar" accept="image/*"
+                                    style="display: none;" onchange="this.form.submit()">
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {{ doctor.name }}
+                        {% if current_user.doctor_id == doctor.id %}
+                        <span
+                            style="font-size: 0.7rem; background-color: var(--primary-color); color: white; padding: 1px 4px; border-radius: 4px; margin-left: 4px;">我</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ doctor.gender }}</td>
+                    <td>{{ doctor.title }}</td>
+                    <td>
+                        {% if doctor.specialty %}
+                        {% for sp in doctor.specialty.split(',') %}
+                        <span class="specialty-tag">{{ sp }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span style="font-weight: bold; color: var(--primary-color);">{{ doctor.used_annual_leave_days
+                            }}</span> / {{ doctor.annual_leave_days }}
+                    </td>
+                    <td>
+                        {% if doctor.status == 'active' %}
+                        <span style="color: var(--primary-color); font-weight: bold;">在职</span>
+                        {% else %}
+                        <span style="color: #d63031;">离职</span>
+                        <div style="font-size: 0.8rem; color: var(--text-light);">{{
+                            doctor.resignation_date.strftime('%Y-%m') }}</div>
+                        {% endif %}
+                    </td>
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <td>
+                        <a href="{{ url_for('edit_doctor', id=doctor.id) }}" class="btn-outline"
+                            style="font-size: 0.8rem; padding: 0.3rem 0.8rem;">编辑</a>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ 8 if current_user.role in ['admin', 'super_admin'] else 7 }}"
+                        style="text-align: center; padding: 2rem; color: var(--text-light);">
+                        暂无医生数据，请点击右上角添加。
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleActions() {
+        var actions = document.getElementById('doctorActions');
+        actions.classList.toggle('show');
+    }
+
+    // Close actions when clicking outside
+    window.addEventListener('click', function (e) {
+        var actions = document.getElementById('doctorActions');
+        var btn = document.querySelector('.action-toggle-btn');
+        if (!actions.contains(e.target) && !btn.contains(e.target) && actions.classList.contains('show')) {
+            actions.classList.remove('show');
+        }
+    });
+</script>
+{% endblock %}

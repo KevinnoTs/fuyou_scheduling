@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>妇幼影像科排班统计系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.0">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
+    <style>
+        /* Internal styles for components specific to base layout */
+        .login-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-form {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .login-inputs {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+
+        .login-inputs.active {
+            max-width: 400px;
+            opacity: 1;
+            padding-right: 0.5rem;
+        }
+
+        .login-inputs input {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            width: 140px;
+            outline: none;
+            font-size: 0.9rem;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .login-inputs input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+        }
+
+        .login-btn {
+            padding: 0.4rem 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .navbar-nav {
+            overflow: visible;
+        }
+
+        .user-menu {
+            position: relative;
+            margin-left: 1rem;
+            cursor: pointer;
+        }
+
+        /* User Name Button Style - Matching Nav Links */
+        .user-name {
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+            line-height: 1.6;
+        }
+
+        .user-name:hover,
+        .user-menu.active .user-name {
+            background-color: var(--secondary-color);
+            color: var(--primary-dark);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 10px);
+            background-color: var(--white);
+            min-width: 160px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-radius: 12px;
+            z-index: 1001;
+            padding: 0.5rem 0;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-origin: top right;
+        }
+
+        .dropdown-content.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .dropdown-content::before {
+            content: "";
+            position: absolute;
+            top: -6px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-content a:hover {
+            background-color: var(--bg-light);
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+
+<body
+    class="{{ current_user.theme_mode if current_user.is_authenticated and current_user.theme_mode else request.cookies.get('theme_mode', 'light') }} theme-{{ current_user.theme_color if current_user.is_authenticated and current_user.theme_color else request.cookies.get('theme_color', 'orange') }}"
+    style="display: flex; flex-direction: column; height: 100vh; margin: 0; overflow: hidden;">
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="navbar-brand">
+            <span style="font-size: 1.8rem;">🏥</span> 妇幼影像科排班统计系统
+        </a>
+        <button class="navbar-toggle" onclick="toggleNavbar()">☰</button>
+        <div class="navbar-nav" id="navbarNav">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('schedule') }}" class="nav-btn">📅 <span>排班表</span></a>
+            <a href="{{ url_for('doctors_list') }}" class="nav-btn">👨‍⚕️ <span>医生列表</span></a>
+            {% if current_user.role in ['admin', 'super_admin'] %}
+            <a href="{{ url_for('users_list') }}" class="nav-btn">👥 <span>用户管理</span></a>
+            <a href="{{ url_for('holidays_list') }}" class="nav-btn">🏖️ <span>节假日</span></a>
+            {% endif %}
+
+            <!-- 用户下拉菜单 -->
+            <div class="user-menu" id="userMenu">
+                <button class="user-name" onclick="toggleUserDropdown(event)">
+                    {{ current_user.real_name or current_user.username }} ▼
+                </button>
+                <div class="dropdown-content" id="userDropdown">
+                    <a href="#" onclick="openThemeModal(event)">🎨 显示设置</a>
+                    <a href="{{ url_for('logout') }}">🚪 退出登录</a>
+                </div>
+            </div>
+            {% else %}
+            <!-- 登录交互 -->
+            <div class="login-wrapper">
+                <form action="{{ url_for('login') }}" method="post" class="login-form" id="loginForm" novalidate>
+                    <div class="login-inputs" id="loginInputs">
+                        <input type="text" name="username" placeholder="用户名" required disabled>
+                        <input type="password" name="password" placeholder="密码" required disabled>
+                    </div>
+                    <button type="button" class="btn-primary login-btn" id="loginExpandBtn"
+                        onclick="expandLogin(event)">登录</button>
+                    <button type="submit" class="btn-primary login-btn" id="loginSubmitBtn"
+                        style="display: none;">确认</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- 消息提示 -->
+    <div class="flash-messages" id="flashMessages">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="container"
+        style="flex: 1; width: 100%; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column;">
+        <div class="content-wrapper {% block wrapper_class %}scrollable-wrapper{% endblock %}">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" style="margin-bottom: 0.5rem;">
+        <div class="container" style="text-align: center; padding: 0.5rem 0;">
+            <div class="footer-content">
+                <span class="footer-item">© 2025 妇幼影像科排班统计系统</span>
+                <span class="footer-separator">|</span>
+                <span class="footer-item">Powered by KevinnoTs</span>
+                <span class="footer-separator">|</span>
+                <span class="footer-item">本站使用「<a href="https://github.com/lxgw/LxgwNeoXiHei-Screen" target="_blank"
+                        style="color: var(--text-light); text-decoration: none;">霞鹜新晰黑</a>」开源字体</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Login Modal -->
+    <div class="modal-overlay" id="mobileLoginModal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeMobileLogin()">&times;</span>
+            <h3 class="modal-title">用户登录</h3>
+            <form action="{{ url_for('login') }}" method="post" id="mobileLoginForm">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" name="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">登录</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Theme Settings Modal -->
+    <div class="modal-overlay" id="themeModal">
+        <div class="modal-content" style="max-width: 450px;">
+            <span class="modal-close" onclick="closeThemeModal()">&times;</span>
+            <h3 class="modal-title">显示设置</h3>
+
+            <div class="theme-section">
+                <h4 style="margin-bottom: 1rem; color: var(--text-main);">模式</h4>
+                <div class="theme-toggle-group" style="display: flex; gap: 1rem;">
+                    <button class="theme-btn" onclick="setThemeMode('light')" id="btn-mode-light">🌞 明亮</button>
+                    <button class="theme-btn" onclick="setThemeMode('dark')" id="btn-mode-dark">🌙 深色</button>
+                </div>
+            </div>
+
+            <div class="theme-section" style="margin-top: 2rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text-main);">色调</h4>
+                <div class="color-options" style="display: flex; gap: 1rem;">
+                    <div class="color-option theme-orange" onclick="setThemeColor('orange')" title="暖橙"></div>
+                    <div class="color-option theme-blue" onclick="setThemeColor('blue')" title="静谧蓝"></div>
+                    <div class="color-option theme-green" onclick="setThemeColor('green')" title="清新绿"></div>
+                    <div class="color-option theme-purple" onclick="setThemeColor('purple')" title="优雅紫"></div>
+                </div>
+            </div>
+
+            <div class="theme-actions" style="margin-top: 2.5rem; text-align: right;">
+                <button class="btn-outline" onclick="closeThemeModal()" style="margin-right: 0.5rem;">取消</button>
+                <button class="btn-primary" onclick="saveThemeSettings()">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script>
+        // 移除 Alert 的通用逻辑
+        function dismissAlert(alert) {
+            alert.classList.add('fade-out');
+            alert.addEventListener('animationend', function () {
+                alert.style.visibility = 'hidden';
+                alert.style.pointerEvents = 'none';
+                alert.classList.add('is-hidden');
+
+                var container = document.getElementById('flashMessages');
+                var allAlerts = container.querySelectorAll('.alert');
+                var hiddenAlerts = container.querySelectorAll('.alert.is-hidden');
+
+                if (allAlerts.length === hiddenAlerts.length) {
+                    container.innerHTML = '';
+                }
+            }, { once: true });
+        }
+
+        // 显示自定义 Flash 消息
+        function showFlashMessage(message) {
+            var container = document.getElementById('flashMessages');
+            var alert = document.createElement('div');
+            alert.className = 'alert';
+            alert.textContent = message;
+            container.appendChild(alert);
+
+            setTimeout(function () {
+                dismissAlert(alert);
+            }, 3000);
+        }
+
+        // 通用登录表单处理函数
+        function handleLoginSubmit(event) {
+            event.preventDefault();
+            var form = event.target;
+            var usernameInput = form.querySelector('input[name="username"]');
+            var passwordInput = form.querySelector('input[name="password"]');
+
+            if (!usernameInput.value.trim()) {
+                showFlashMessage('请输入用户名');
+                usernameInput.focus();
+                return;
+            }
+            if (!passwordInput.value.trim()) {
+                showFlashMessage('请输入密码');
+                passwordInput.focus();
+                return;
+            }
+
+            var formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        showFlashMessage(data.message);
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showFlashMessage('登录请求失败，请稍后重试');
+                });
+        }
+
+        // 绑定登录表单事件
+        document.getElementById('loginForm')?.addEventListener('submit', handleLoginSubmit);
+        document.getElementById('mobileLoginForm')?.addEventListener('submit', handleLoginSubmit);
+
+        // 展开登录框 (区分移动端和桌面端)
+        function expandLogin(event) {
+            event.stopPropagation();
+
+            // 使用 matchMedia 进行更准确的媒体查询匹配
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                // 移动端：显示模态框
+                document.getElementById('mobileLoginModal').classList.add('active');
+                // 自动聚焦
+                setTimeout(() => {
+                    document.querySelector('#mobileLoginForm input[name="username"]').focus();
+                }, 100);
+            } else {
+                // 桌面端：原有逻辑
+                var inputs = document.getElementById('loginInputs');
+                var expandBtn = document.getElementById('loginExpandBtn');
+                var submitBtn = document.getElementById('loginSubmitBtn');
+                var form = document.getElementById('loginForm');
+                var usernameInput = inputs.querySelector('input[name="username"]');
+                var passwordInput = inputs.querySelector('input[name="password"]');
+
+                // 确保移动端模态框关闭
+                document.getElementById('mobileLoginModal').classList.remove('active');
+
+                inputs.classList.add('active');
+                form.classList.add('active');
+                expandBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+
+                usernameInput.disabled = false;
+                passwordInput.disabled = false;
+                setTimeout(() => usernameInput.focus(), 100);
+            }
+        }
+
+        // 关闭移动端登录模态框
+        function closeMobileLogin() {
+            document.getElementById('mobileLoginModal').classList.remove('active');
+        }
+
+        // 重置登录框状态 (桌面端)
+        function resetLogin() {
+            var inputs = document.getElementById('loginInputs');
+            var expandBtn = document.getElementById('loginExpandBtn');
+            var submitBtn = document.getElementById('loginSubmitBtn');
+            var form = document.getElementById('loginForm');
+
+            if (inputs && inputs.classList.contains('active')) {
+                var usernameInput = inputs.querySelector('input[name="username"]');
+                var passwordInput = inputs.querySelector('input[name="password"]');
+
+                inputs.classList.remove('active');
+                form.classList.remove('active');
+                submitBtn.style.display = 'none';
+                expandBtn.style.display = 'block';
+
+                usernameInput.disabled = true;
+                passwordInput.disabled = true;
+                usernameInput.value = '';
+                passwordInput.value = '';
+            }
+        }
+
+        // 用户下拉菜单交互
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            var menu = document.getElementById('userMenu');
+            var dropdown = document.getElementById('userDropdown');
+            menu.classList.toggle('active');
+            dropdown.classList.toggle('show');
+        }
+
+        // Theme Settings Logic
+        let currentMode = '{{ current_user.theme_mode if current_user.is_authenticated and current_user.theme_mode else request.cookies.get("theme_mode", "light") }}';
+        let currentColor = '{{ current_user.theme_color if current_user.is_authenticated and current_user.theme_color else request.cookies.get("theme_color", "orange") }}';
+
+        function openThemeModal(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('themeModal').classList.add('active');
+
+            // Highlight current selection
+            updateThemeUIState();
+
+            // Close dropdown
+            document.getElementById('userDropdown').classList.remove('show');
+            document.getElementById('userMenu').classList.remove('active');
+        }
+
+        function closeThemeModal() {
+            document.getElementById('themeModal').classList.remove('active');
+            // Revert to saved state if cancelled? For now, we keep live preview.
+            // Or maybe we should revert if not saved. Let's assume live preview is desired.
+        }
+
+        function setThemeMode(mode) {
+            currentMode = mode;
+            document.body.classList.remove('light', 'dark');
+            document.body.classList.add(mode);
+            updateThemeUIState();
+        }
+
+        function setThemeColor(color) {
+            currentColor = color;
+            document.body.classList.remove('theme-orange', 'theme-blue', 'theme-green', 'theme-purple');
+            document.body.classList.add('theme-' + color);
+            updateThemeUIState();
+        }
+
+        function updateThemeUIState() {
+            // Update Mode Buttons
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-mode-' + currentMode).classList.add('active');
+
+            // Update Color Options
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
+            document.querySelector('.color-option.theme-' + currentColor).classList.add('active');
+        }
+
+        function saveThemeSettings() {
+            // Save to server
+            fetch('/api/update_theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    mode: currentMode,
+                    color: currentColor
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showFlashMessage('显示设置已保存');
+                        closeThemeModal();
+                    } else {
+                        showFlashMessage('保存失败: ' + (data.error || '未知错误'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Even if server fails (e.g. not logged in), we save locally
+                    showFlashMessage('设置已应用');
+                    closeThemeModal();
+                });
+
+            // Save to cookies for persistence after logout
+            // Set cookie for 30 days
+            const d = new Date();
+            d.setTime(d.getTime() + (30 * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = "theme_mode=" + currentMode + ";" + expires + ";path=/";
+            document.cookie = "theme_color=" + currentColor + ";" + expires + ";path=/";
+        }
+
+        // 点击外部关闭所有弹窗
+        window.onclick = function (event) {
+            if (!event.target.closest('.user-menu')) {
+                var menu = document.getElementById('userMenu');
+                var dropdown = document.getElementById('userDropdown');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                    menu.classList.remove('active');
+                }
+            }
+
+            if (!event.target.closest('.login-wrapper')) {
+                resetLogin();
+            }
+
+            // 点击模态框背景关闭
+            var modal = document.getElementById('mobileLoginModal');
+            if (event.target === modal) {
+                closeMobileLogin();
+            }
+
+            var themeModal = document.getElementById('themeModal');
+            if (event.target === themeModal) {
+                closeThemeModal();
+            }
+        }
+
+        // Flash 消息 5秒后自动消失
+        document.addEventListener('DOMContentLoaded', function () {
+            var alerts = document.querySelectorAll('.alert');
+            if (alerts.length > 0) {
+                setTimeout(function () {
+                    alerts.forEach(function (alert) {
+                        dismissAlert(alert);
+                    });
+                }, 5000);
+            }
+
+            // Initialize UI state
+            updateThemeUIState();
+
+            // If user is logged in, sync their DB settings to cookies so they persist after logout
+            {% if current_user.is_authenticated %}
+            const d = new Date();
+            d.setTime(d.getTime() + (30 * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = "theme_mode={{ current_user.theme_mode or 'light' }};" + expires + ";path=/";
+            document.cookie = "theme_color={{ current_user.theme_color or 'orange' }};" + expires + ";path=/";
+            {% endif %}
+        });
+
+        // Navbar Toggle Logic
+        function toggleNavbar() {
+            const nav = document.getElementById('navbarNav');
+            nav.classList.toggle('show');
+        }
+
+        // Close navbar when clicking outside
+        document.addEventListener('click', function (event) {
+            const nav = document.getElementById('navbarNav');
+            const toggle = document.querySelector('.navbar-toggle');
+            if (nav.classList.contains('show') && !nav.contains(event.target) && !toggle.contains(event.target)) {
+                nav.classList.remove('show');
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

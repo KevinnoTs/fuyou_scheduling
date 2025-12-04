@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 2rem;">
+        {{ title }}
+    </h2>
+
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="avatar">头像</label>
+            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 1rem;">
+                {% if doctor and doctor.avatar_path %}
+                <img src="{{ url_for('static', filename=doctor.avatar_path) }}" alt="Avatar"
+                    style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 4px solid var(--primary-color);">
+                {% else %}
+                <!-- 默认头像预览逻辑 -->
+                {% set default_avatar = 'images/doctor-male.jpg' if (doctor and doctor.gender == '男') else
+                'images/doctor-female.jpg' %}
+                <img src="{{ url_for('static', filename=default_avatar) }}" alt="Default Avatar"
+                    style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 4px solid var(--primary-color); opacity: 0.9;">
+                <span style="font-size: 0.8rem; color: var(--text-light);">(默认头像)</span>
+                {% endif %}
+            </div>
+            <input type="file" id="avatar" name="avatar" class="form-control" accept="image/*">
+            <small style="color: var(--text-light);">支持 jpg, png, gif 格式。如不上传，将使用默认头像。</small>
+        </div>
+
+        <div class="form-group">
+            <label for="name">姓名 <span style="color: red;">*</span></label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ doctor.name if doctor else '' }}"
+                required>
+        </div>
+
+        <div class="form-group">
+            <label for="gender">性别</label>
+            <select id="gender" name="gender" class="form-control">
+                <option value="女" {% if not doctor or doctor.gender=='女' %}selected{% endif %}>女</option>
+                <option value="男" {% if doctor and doctor.gender=='男' %}selected{% endif %}>男</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>专长</label>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                {% set specialties = ['妇科', '产科', '儿科', '筛查'] %}
+                {% set current_specialties = doctor.specialty.split(',') if doctor and doctor.specialty else [] %}
+                {% for sp in specialties %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
+                    <input type="checkbox" name="specialty" value="{{ sp }}" {% if sp in current_specialties %}checked{% endif %}>
+                    {{ sp }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>年假设置</label>
+            <div style="display: flex; gap: 1rem;">
+                <div style="flex: 1;">
+                    <label for="annual_leave_days" style="font-size: 0.8rem;">每年总天数</label>
+                    <input type="number" id="annual_leave_days" name="annual_leave_days" class="form-control"
+                        value="{{ doctor.annual_leave_days if doctor else 0 }}" min="0">
+                </div>
+                <div style="flex: 1;">
+                    <label for="used_annual_leave_days" style="font-size: 0.8rem;">已休天数</label>
+                    <input type="number" id="used_annual_leave_days" name="used_annual_leave_days" class="form-control"
+                        value="{{ doctor.used_annual_leave_days if doctor else 0 }}" min="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="status">状态</label>
+            <select id="status" name="status" class="form-control" onchange="toggleResignationDate()">
+                <option value="active" {% if not doctor or doctor.status=='active' %}selected{% endif %}>在职</option>
+                <option value="resigned" {% if doctor and doctor.status=='resigned' %}selected{% endif %}>离职</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="resignation-group" style="display: none;">
+            <label for="resignation_date">离职月份</label>
+            <input type="month" id="resignation_date" name="resignation_date" class="form-control"
+                value="{{ doctor.resignation_date.strftime('%Y-%m') if doctor and doctor.status == 'resigned' and doctor.resignation_date else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="display_order">显示顺序 (越小越靠前)</label>
+            <input type="number" id="display_order" name="display_order" class="form-control"
+                value="{{ doctor.display_order if doctor else 999 }}">
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn-primary" style="flex: 1;">保存</button>
+            <a href="{{ url_for('doctors_list') }}" class="btn-outline" style="flex: 1; text-align: center;">取消</a>
+        </div>
+    </form>
+
+    {% if doctor and current_user.role in ['admin', 'super_admin'] %}
+    <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
+        <h4 style="color: #d63031; margin-bottom: 1rem;">危险操作</h4>
+        <button type="button" class="btn-outline"
+            style="width: 100%; color: #d63031; border-color: #d63031; cursor: pointer;" onclick="openDeleteModal()">
+            删除该医生
+        </button>
+    </div>
+
+    <!-- 自定义删除确认模态框 -->
+    <div id="deleteModal" class="delete-modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #d63031; margin-bottom: 1rem;">⚠️ 确认删除</h3>
+            <p style="margin-bottom: 1.5rem; color: #666;">
+                确定要彻底删除医生 <strong>{{ doctor.name }}</strong> 吗？<br>
+                此操作不可恢复！
+            </p>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="btn-outline" onclick="closeDeleteModal()"
+                    style="flex: 1; padding: 0.6rem 0;">取消</button>
+                <form action="{{ url_for('delete_doctor', id=doctor.id) }}" method="post"
+                    style="flex: 1; margin: 0; display: flex;">
+                    <button type="submit" class="btn-primary"
+                        style="width: 100%; background-color: #d63031; border-color: #d63031; padding: 0.6rem 0;">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .delete-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            animation: scaleIn 0.3s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+
+    <script>
+        function openDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+        // 点击遮罩层关闭
+        document.getElementById('deleteModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+    </script>
+    {% endif %}
+</div>
+
+<script>
+    function toggleResignationDate() {
+        var status = document.getElementById('status').value;
+        var group = document.getElementById('resignation-group');
+        if (status === 'resigned') {
+            group.style.display = 'block';
+        } else {
+            group.style.display = 'none';
+        }
+    }
+
+    // 头像实时预览
+    document.getElementById('avatar').addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var img = document.querySelector('img[alt="Avatar"]') || document.querySelector('img[alt="Default Avatar"]');
+                if (img) {
+                    img.src = e.target.result;
+                    // 如果是默认头像，移除透明度并更新alt
+                    img.style.opacity = '1';
+                    img.alt = 'Avatar'; // 视为已上传头像
+                }
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 性别联动默认头像
+    document.getElementById('gender').addEventListener('change', function () {
+        var gender = this.value;
+        var avatarImg = document.querySelector('img[alt="Default Avatar"]');
+        // 仅当显示的是默认头像（且未上传新头像预览）时才更新
+        // 注意：如果用户已经上传了预览图，alt会变成 'Avatar'，所以这里不会误触
+        if (avatarImg) {
+            if (gender === '男') {
+                avatarImg.src = "{{ url_for('static', filename='images/doctor-male.jpg') }}";
+            } else {
+                avatarImg.src = "{{ url_for('static', filename='images/doctor-female.jpg') }}";
+            }
+        }
+    });
+
+    // 初始化运行一次
+    toggleResignationDate();
+
+    // 年假验证
+    const annualTotalInput = document.getElementById('annual_leave_days');
+    const annualUsedInput = document.getElementById('used_annual_leave_days');
+
+    function validateAnnualLeave() {
+        const total = parseInt(annualTotalInput.value) || 0;
+        const used = parseInt(annualUsedInput.value) || 0;
+        if (used > total) {
+            alert('错误：已休年假天数不能大于每年总年假天数');
+            annualUsedInput.value = total; // 自动修正为最大值
+        }
+    }
+
+    annualTotalInput.addEventListener('change', validateAnnualLeave);
+    annualUsedInput.addEventListener('change', validateAnnualLeave);
+</script>
+{% endblock %}

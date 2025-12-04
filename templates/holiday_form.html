@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2>{{ title }}</h2>
+    <form method="post" class="form-grid">
+        <div class="form-group">
+            <label for="name">节日名称</label>
+            <input type="text" id="name" name="name" class="form-control" required
+                value="{{ holiday.name if holiday else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="type">类型</label>
+            <select id="type" name="type" class="form-control">
+                <option value="holiday" {% if holiday and holiday.type=='holiday' %}selected{% endif %}>放假</option>
+                <option value="workday" {% if holiday and holiday.type=='workday' %}selected{% endif %}>调休</option>
+            </select>
+        </div>
+
+        {% if not holiday %}
+        <div class="form-group">
+            <label for="start_date">开始日期</label>
+            <input type="date" id="start_date" name="start_date" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_date">结束日期 (可选，用于批量添加)</label>
+            <input type="date" id="end_date" name="end_date" class="form-control" placeholder="留空则默认为单日">
+            <small style="color: #666;">如果填写了结束日期，系统将自动添加从开始日期到结束日期（包含）的所有天数。</small>
+        </div>
+        {% else %}
+        <div class="form-group">
+            <label>日期</label>
+            <input type="text" class="form-control" value="{{ holiday.date }}" disabled
+                style="background-color: #f5f5f5;">
+            <small style="color: #666;">日期不可修改，如需修改请删除后重新添加。</small>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <a href="{{ url_for('holidays_list') }}" class="btn-outline">取消</a>
+            <button type="submit" class="btn-primary">保存</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">智能排班，高效医疗</h1>
+    <p class="hero-subtitle">专为妇幼影像科设计的现代化排班统计系统。简化流程，提升效率，让医护人员专注于更重要的事。</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+        <h3>智能排班</h3>
+        <p style="color: var(--text-light);">自动化排班算法，支持复杂的轮班规则和节假日调整。</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+        <h3>工时统计</h3>
+        <p style="color: var(--text-light);">自动计算工时与工作量，生成精确的报表数据。</p>
+    </div>
+    <div class="card" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">👩‍⚕️</div>
+        <h3>人员管理</h3>
+        <p style="color: var(--text-light);">便捷管理医生与护理人员信息，职务、专长一目了然。</p>
+    </div>
+</div>
+{% endblock %}
