@@ -45,9 +45,11 @@
         <table id="statsTable">
             <thead>
                 <tr>
-                    <th>医生</th>
-                    <th>当月总分</th>
-                    <th style="width: 100px; text-align: center;">操作</th>
+                    <th style="width: 4rem; min-width: 4rem;">医生</th>
+                    <th style="width: 5rem; min-width: 5rem;">当月总分</th>
+                    <th style="width: 8rem; min-width: 8rem; text-align: center;">操作</th>
+                    <!-- Spacer Column -->
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -61,15 +63,25 @@
                     </td>
                     <td style="font-weight: bold; color: var(--primary-color);">{{ item.total_score }}</td>
                     <td style="text-align: center;">
-                        <a href="{{ url_for('doctor_monthly_details', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
-                            class="btn-outline" style="padding: 2px 8px; font-size: 0.85rem; text-decoration: none;">
-                            详情
-                        </a>
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                            <a href="{{ url_for('doctor_workload_calendar', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
+                                class="btn-outline"
+                                style="padding: 2px 8px; font-size: 0.85rem; text-decoration: none;">
+                                详情
+                            </a>
+                            <a href="{{ url_for('doctor_monthly_details', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
+                                class="btn-outline"
+                                style="padding: 2px 8px; font-size: 0.85rem; text-decoration: none;">
+                                列表
+                            </a>
+                        </div>
                     </td>
+                    <!-- Spacer Cell -->
+                    <td></td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3" style="text-align: center; color: var(--text-light);">暂无数据</td>
+                    <td colspan="4" style="text-align: center; color: var(--text-light);">暂无数据</td>
                 </tr>
                 {% endfor %}
             </tbody>

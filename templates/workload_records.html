@@ -142,16 +142,16 @@
         <table id="recordsTable">
             <thead>
                 <tr>
-                    <th>
+                    <th style="width: 6rem; min-width: 6rem; white-space: nowrap;">
                         日期 <span class="filter-icon" onclick="toggleFilter(event, 0)">▼</span>
                         <div class="filter-dropdown" id="filter-dropdown-0"></div>
                     </th>
-                    <th>
+                    <th style="width: 4rem; min-width: 4rem; white-space: nowrap;">
                         医生 <span class="filter-icon" onclick="toggleFilter(event, 1)">▼</span>
                         <div class="filter-dropdown" id="filter-dropdown-1"></div>
                     </th>
-                    <th>检查项目</th>
-                    <th>
+                    <th style="min-width: 20rem; width: auto; white-space: normal;">检查项目</th>
+                    <th style="width: 3rem; min-width: 3rem; white-space: nowrap;">
                         分值 <span class="filter-icon" onclick="toggleFilter(event, 3)">▼</span>
                         <div class="filter-dropdown" id="filter-dropdown-3"></div>
                     </th>
@@ -162,7 +162,8 @@
                 <tr>
                     <td>{{ record.report_date }}</td>
                     <td>{{ record.doctor_name }}</td>
-                    <td>{{ record.item_name }}</td>
+                    <td style="white-space: normal; word-break: break-all; min-width: 20rem;">{{ record.item_name }}
+                    </td>
                     <td>{{ score if score is not none else '未配置' }}</td>
                 </tr>
                 {% else %}

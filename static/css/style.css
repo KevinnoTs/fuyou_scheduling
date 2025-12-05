@@ -130,6 +130,8 @@ body.dark .navbar {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
+    /* Prevent title wrapping */
 }
 
 .navbar-nav {
@@ -146,6 +148,8 @@ body.dark .navbar {
     padding: 0.6rem 1.2rem;
     border-radius: var(--radius);
     transition: all 0.3s ease;
+    white-space: nowrap;
+    /* Prevent link text wrapping */
 }
 
 .nav-btn:hover {
@@ -201,7 +205,7 @@ body.dark .navbar-toggle,
 }
 
 /* Responsive Navbar Logic */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
     .nav-btn span {
         display: none;
     }
@@ -209,13 +213,14 @@ body.dark .navbar-toggle,
     .nav-btn {
         padding: 0.6rem 0.8rem;
     }
-}
 
-@media (max-width: 768px) {
-    .navbar-toggle {
+    /* Show toggles earlier */
+    .navbar-toggle,
+    .action-toggle-btn {
         display: flex;
     }
 
+    /* Mobile Navbar Styles */
     .navbar-nav {
         display: none;
         position: absolute;
@@ -284,6 +289,16 @@ body.dark .navbar-toggle,
     .dropdown-content::before {
         display: none;
     }
+
+    /* Action Bar Logic moved to bottom of file for specificity */
+}
+
+/* Page Title No-Wrap */
+.card h2 {
+    white-space: nowrap;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    line-height: 1.2;
 }
 
 @keyframes slideDown {
@@ -315,6 +330,7 @@ body.dark .navbar-toggle,
     align-items: center;
     justify-content: center;
     line-height: 1.6;
+    white-space: nowrap;
 }
 
 .btn-primary:hover {
@@ -339,6 +355,7 @@ body.dark .navbar-toggle,
     align-items: center;
     justify-content: center;
     line-height: 1.6;
+    white-space: nowrap;
 }
 
 .btn-outline:hover {
@@ -732,7 +749,7 @@ body.dark .table-container {
 }
 
 .table-container table {
-    min-width: 1000px;
+    min-width: auto;
 }
 
 .table-container th,
@@ -852,13 +869,15 @@ body.dark .alert {
     gap: 1rem;
 }
 
-@media (max-width: 768px) {
+/* Responsive Action Bar (Combined Logic for < 1200px) */
+@media (max-width: 1200px) {
     .action-toggle-btn {
         display: flex;
     }
 
     .action-bar {
         display: none;
+        /* Default hidden */
         position: absolute;
         top: 100%;
         right: 0;
@@ -873,7 +892,6 @@ body.dark .alert {
         min-width: 200px;
         border: 1px solid rgba(0, 0, 0, 0.05);
         align-items: center;
-        /* Center the wrapper */
     }
 
     .action-content-wrapper {
@@ -892,7 +910,57 @@ body.dark .alert {
 
     .action-bar.show {
         display: flex !important;
+        /* Show when toggled (flex for column layout) */
         animation: slideDown 0.2s ease;
+    }
+
+    .action-bar form {
+        display: flex;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .action-bar input[name="q"] {
+        margin-bottom: 0;
+    }
+
+    .action-bar form select {
+        width: 120px !important;
+        text-align: center;
+    }
+
+    .action-bar .btn-primary,
+    .action-bar .btn-outline {
+        width: auto;
+        min-width: auto;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .action-bar .holiday-actions-group {
+        display: flex;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        width: 100%;
+        gap: 0.8rem;
+    }
+
+    .action-bar .holiday-actions-group .btn-primary,
+    .action-bar .holiday-actions-group .btn-outline {
+        width: auto;
+        text-align: center;
+        margin-left: 0;
+        display: block;
+    }
+
+    .action-bar .holiday-actions-group a.btn-primary {
+        display: inline-block;
+    }
+
+    .action-content-wrapper .form-control {
+        width: 100% !important;
     }
 
     .action-bar form {
@@ -1002,4 +1070,8 @@ body.dark .readonly-input {
     width: 24px;
     text-align: center;
     margin-right: 0.5rem;
+}
+
+.user-name {
+    font-weight: bold;
 }

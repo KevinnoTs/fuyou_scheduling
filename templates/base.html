@@ -378,7 +378,19 @@
 
                 usernameInput.disabled = false;
                 passwordInput.disabled = false;
-                setTimeout(() => usernameInput.focus(), 100);
+                setTimeout(() => {
+                    usernameInput.focus();
+                    // Restore from localStorage
+                    const saved = localStorage.getItem('fuyou_username');
+                    if (saved && !usernameInput.value) {
+                        usernameInput.value = saved;
+                    }
+                }, 100);
+
+                // Add listener to save input
+                usernameInput.addEventListener('input', (e) => {
+                    localStorage.setItem('fuyou_username', e.target.value);
+                });
             }
         }
 
@@ -405,8 +417,11 @@
 
                 usernameInput.disabled = true;
                 passwordInput.disabled = true;
-                usernameInput.value = '';
-                passwordInput.value = '';
+                usernameInput.disabled = true;
+                passwordInput.disabled = true;
+                // Removed clearing of values to persist input on accidental close
+                // usernameInput.value = '';
+                // passwordInput.value = '';
             }
         }
 

@@ -27,9 +27,8 @@
     /* Item Name Column: Allow wrapping */
     td.item-name {
         white-space: normal;
-        word-break: break-word;
-        min-width: 200px;
-        /* Ensure enough width for text */
+        word-break: break-all;
+        min-width: 20rem;
     }
 
     /* Integrated Summary Styling */
@@ -84,10 +83,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>项目名称</th>
-                    <th style="width: 80px; text-align: right; white-space: nowrap;">分值</th>
-                    <th style="width: 80px; text-align: center; white-space: nowrap;">数量</th>
-                    <th style="width: 100px; text-align: right; white-space: nowrap;">总分</th>
+                    <th style="min-width: 20rem; white-space: normal;">项目名称</th>
+                    <th style="width: 3rem; min-width: 3rem; text-align: right; white-space: nowrap;">分值</th>
+                    <th style="width: 3rem; min-width: 3rem; text-align: center; white-space: nowrap;">数量</th>
+                    <th style="width: 4rem; min-width: 4rem; text-align: right; white-space: nowrap;">总分</th>
                 </tr>
             </thead>
             <tbody>

@@ -37,13 +37,15 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 20%;">日期</th>
-                    <th style="width: 15%;">星期</th>
-                    <th style="width: 25%;">名称</th>
-                    <th style="width: 15%;">类型</th>
+                    <th style="width: 6rem; min-width: 6rem;">日期</th>
+                    <th style="width: 3rem; min-width: 3rem;">星期</th>
+                    <th style="width: 6rem; min-width: 6rem;">名称</th>
+                    <th style="width: 3rem; min-width: 3rem;">类型</th>
                     {% if current_user.role in ['admin', 'super_admin'] %}
-                    <th style="width: 25%;">操作</th>
+                    <th style="width: 8rem; min-width: 8rem; text-align: center;">操作</th>
                     {% endif %}
+                    <!-- Spacer Column -->
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -73,13 +75,16 @@
                             style="font-size: 0.8rem; padding: 0.3rem 0.8rem; border-color: #d63031; color: #d63031;">删除</button>
                     </td>
                     {% endif %}
+                    <!-- Spacer Cell -->
+                    <td></td>
                 </tr>
                 {% endfor %}
                 {% endif %}
 
                 {% if not holidays %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                    <td colspan="{{ 6 if current_user.role in ['admin', 'super_admin'] else 5 }}"
+                        style="text-align: center; padding: 2rem; color: var(--text-light);">
                         暂无本年度节假日数据。
                     </td>
                 </tr>
