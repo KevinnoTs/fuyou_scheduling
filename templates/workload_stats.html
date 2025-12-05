@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2 style="flex-grow: 1;">工作量统计</h2>
+        <button class="action-toggle-btn" onclick="toggleActions()">
+            ☰
+        </button>
+        <div class="action-bar" id="pageActions">
+            <div class="action-content-wrapper">
+                <form method="get" class="form-inline" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select name="year" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                        {% for y in range(2025, 2031) %}
+                        <option value="{{ y }}" {% if y==current_year %}selected{% endif %}>{{ y }}年</option>
+                        {% endfor %}
+                    </select>
+                    <select name="month" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {% if m==current_month %}selected{% endif %}>{{ m }}月</option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                <input type="text" id="searchInput" class="form-control" placeholder="搜索医生姓名..." onkeyup="filterTable()"
+                    style="width: 180px;">
+
+                <div style="display: flex; gap: 0.5rem;">
+                    {% if current_user.role in ['admin', 'super_admin'] %}
+                    <a href="{{ url_for('export_workload_stats', year=current_year, month=current_month) }}"
+                        class="btn-primary">导出统计</a>
+                    <a href="{{ url_for('workload_records', year=current_year, month=current_month) }}"
+                        class="btn-primary">工作记录</a>
+                    <a href="{{ url_for('workload_settings') }}" class="btn-primary">分值设定</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="statsTable">
+            <thead>
+                <tr>
+                    <th>医生</th>
+                    <th>当月总分</th>
+                    <th style="width: 100px; text-align: center;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stats %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('doctor_workload_calendar', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
+                            style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                            {{ item.doctor.name }}
+                        </a>
+                    </td>
+                    <td style="font-weight: bold; color: var(--primary-color);">{{ item.total_score }}</td>
+                    <td style="text-align: center;">
+                        <a href="{{ url_for('doctor_monthly_details', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
+                            class="btn-outline" style="padding: 2px 8px; font-size: 0.85rem; text-decoration: none;">
+                            详情
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-light);">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleActions() {
+        var actions = document.getElementById('pageActions');
+        actions.classList.toggle('show');
+    }
+
+    // Close actions when clicking outside
+    window.addEventListener('click', function (e) {
+        var actions = document.getElementById('pageActions');
+        var btn = document.querySelector('.action-toggle-btn');
+        if (!actions.contains(e.target) && !btn.contains(e.target) && actions.classList.contains('show')) {
+            actions.classList.remove('show');
+        }
+    });
+
+    function filterTable() {
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("statsTable");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 1; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[0]; // Doctor Name column
+            if (td) {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

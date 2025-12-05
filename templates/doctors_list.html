@@ -12,17 +12,9 @@
         </button>
         <div class="action-bar" id="doctorActions">
             <div class="action-content-wrapper">
-                <form action="{{ url_for('doctors_list') }}" method="get">
-                    <input type="text" name="q" placeholder="搜索医生姓名..." class="form-control"
-                        value="{{ request.args.get('q', '') }}" style="width: 180px;">
-                    <div class="search-btn-group">
-                        <button type="submit" class="btn-primary">搜索</button>
-                        {% if request.args.get('q') %}
-                        <a href="{{ url_for('doctors_list') }}" class="btn-outline"
-                            style="display: flex; align-items: center;">重置</a>
-                        {% endif %}
-                    </div>
-                </form>
+                <input type="text" id="searchInput" class="form-control" placeholder="搜索医生姓名或擅长..."
+                    style="width: 200px; display: inline-block;" onkeyup="filterTable()">
+
                 {% if current_user.role in ['admin', 'super_admin'] %}
                 <a href="{{ url_for('add_doctor') }}" class="btn-primary">＋ 添加医生</a>
                 {% endif %}
@@ -31,7 +23,7 @@
     </div>
 
     <div class="table-container">
-        <table>
+        <table id="doctorsTable">
             <thead>
                 <tr>
                     <th style="width: 80px;">头像</th>
@@ -140,5 +132,31 @@
             actions.classList.remove('show');
         }
     });
+
+    function filterTable() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('doctorsTable');
+        const tr = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < tr.length; i++) {
+            // Skip if it's the "No data" row
+            if (tr[i].getElementsByTagName('td').length < 2) continue;
+
+            const nameTd = tr[i].getElementsByTagName('td')[1];
+            const specialtyTd = tr[i].getElementsByTagName('td')[4];
+
+            if (nameTd && specialtyTd) {
+                const nameValue = nameTd.textContent || nameTd.innerText;
+                const specialtyValue = specialtyTd.textContent || specialtyTd.innerText;
+
+                if (nameValue.toLowerCase().indexOf(filter) > -1 || specialtyValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
 </script>
 {% endblock %}

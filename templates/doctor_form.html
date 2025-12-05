@@ -41,13 +41,24 @@
         </div>
 
         <div class="form-group">
+            <label for="title">职务</label>
+            <select id="title" name="title" class="form-control">
+                <option value="" disabled {% if not doctor or not doctor.title %}selected{% endif %}>请选择职务</option>
+                <option value="主任医师" {% if doctor and doctor.title=='主任医师' %}selected{% endif %}>主任医师</option>
+                <option value="医师" {% if doctor and doctor.title=='医师' %}selected{% endif %}>医师</option>
+                <option value="医助" {% if doctor and doctor.title=='医助' %}selected{% endif %}>医助</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label>专长</label>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 {% set specialties = ['妇科', '产科', '儿科', '筛查'] %}
                 {% set current_specialties = doctor.specialty.split(',') if doctor and doctor.specialty else [] %}
                 {% for sp in specialties %}
                 <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: normal; cursor: pointer;">
-                    <input type="checkbox" name="specialty" value="{{ sp }}" {% if sp in current_specialties %}checked{% endif %}>
+                    <input type="checkbox" name="specialty" value="{{ sp }}" {% if sp in current_specialties %}checked{%
+                        endif %}>
                     {{ sp }}
                 </label>
                 {% endfor %}

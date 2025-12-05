@@ -90,16 +90,8 @@ def register_routes(app):
     @app.route('/doctors')
     @login_required
     def doctors_list():
-        # 按显示顺序升序排列
-        search_query = request.args.get('q', '')
-        if search_query:
-            doctors = Doctor.query.filter(
-                (Doctor.name.contains(search_query)) | 
-                (Doctor.specialty.contains(search_query))
-            ).order_by(Doctor.display_order.asc()).all()
-        else:
-            doctors = Doctor.query.order_by(Doctor.display_order.asc()).all()
-            
+        # Always return all doctors for client-side filtering
+        doctors = Doctor.query.order_by(Doctor.display_order.asc()).all()
         return render_template('doctors_list.html', title='医生列表', doctors=doctors)
 
     @app.route('/users')

@@ -20,5 +20,8 @@ def create_app(config_class=Config):
     
     from app.routes import register_routes
     register_routes(app)
+    
+    from app.routes_workload import register_workload_routes
+    register_workload_routes(app)
 
     return app

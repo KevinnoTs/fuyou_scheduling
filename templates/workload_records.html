@@ -1,0 +1,556 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<style>
+    .filter-icon {
+        cursor: pointer;
+        margin-left: 5px;
+        font-size: 0.8em;
+        color: var(--text-light);
+        transition: all 0.2s;
+        display: inline-block;
+    }
+
+    .filter-icon:hover {
+        color: var(--primary-color);
+    }
+
+    .filter-icon.active {
+        color: #dc3545 !important;
+        /* Red */
+        font-weight: bold;
+        transform: scale(1.2);
+    }
+
+    .filter-dropdown {
+        position: absolute;
+        background: var(--white);
+        /* Adapts to dark mode */
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: var(--shadow-md);
+        z-index: 1000;
+        min-width: 200px;
+        max-height: 350px;
+        overflow-y: auto;
+        display: none;
+        text-align: left;
+        padding: 0.5rem 0;
+    }
+
+    body.dark .filter-dropdown {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-dropdown.show {
+        display: block;
+    }
+
+    .filter-option {
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-option:hover {
+        background-color: var(--bg-light);
+    }
+
+    .filter-option input[type="checkbox"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary-color);
+    }
+
+    .filter-actions {
+        padding: 8px 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    body.dark .filter-actions {
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-btn {
+        font-size: 0.85rem;
+        padding: 4px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--primary-color);
+    }
+
+    .filter-btn:hover {
+        background: var(--bg-light);
+    }
+
+    th {
+        position: relative;
+        /* For dropdown positioning */
+    }
+</style>
+
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2 style="flex-grow: 1;">工作记录</h2>
+
+        <button class="action-toggle-btn" onclick="toggleActions()">
+            ☰
+        </button>
+
+        <div class="action-bar" id="pageActions">
+            <div class="action-content-wrapper">
+                <form method="get" class="form-inline" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select name="year" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                        {% for y in range(2025, 2031) %}
+                        <option value="{{ y }}" {% if y==current_year %}selected{% endif %}>{{ y }}年</option>
+                        {% endfor %}
+                    </select>
+                    <select name="month" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {% if m==current_month %}selected{% endif %}>{{ m }}月</option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                {% if current_user.role in ['admin', 'super_admin'] %}
+                <button class="btn-primary" onclick="openAddModal()">+ 添加记录</button>
+                <button class="btn-primary" onclick="openImportModal()">导入记录</button>
+                <button class="btn-primary" style="background: #dc3545 !important; border-color: #dc3545 !important;"
+                    onclick="openDeleteModal()">整月删除</button>
+                {% endif %}
+                <a href="{{ url_for('workload_stats', year=current_year, month=current_month) }}"
+                    class="btn-outline">返回</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="recordsTable">
+            <thead>
+                <tr>
+                    <th>
+                        日期 <span class="filter-icon" onclick="toggleFilter(event, 0)">▼</span>
+                        <div class="filter-dropdown" id="filter-dropdown-0"></div>
+                    </th>
+                    <th>
+                        医生 <span class="filter-icon" onclick="toggleFilter(event, 1)">▼</span>
+                        <div class="filter-dropdown" id="filter-dropdown-1"></div>
+                    </th>
+                    <th>检查项目</th>
+                    <th>
+                        分值 <span class="filter-icon" onclick="toggleFilter(event, 3)">▼</span>
+                        <div class="filter-dropdown" id="filter-dropdown-3"></div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record, score in records %}
+                <tr>
+                    <td>{{ record.report_date }}</td>
+                    <td>{{ record.doctor_name }}</td>
+                    <td>{{ record.item_name }}</td>
+                    <td>{{ score if score is not none else '未配置' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-light);">暂无记录</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Record Modal -->
+<div id="addModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeAddModal()">&times;</span>
+        <h3 class="modal-title">添加工作记录</h3>
+        <form method="post">
+            <div class="form-group">
+                <label>报告日期</label>
+                <!-- Default to 1st day of selected month -->
+                <input type="date" name="report_date" class="form-control" required
+                    value="{{ '%04d-%02d-01' % (current_year, current_month) }}">
+            </div>
+            <div class="form-group">
+                <label>医师姓名</label>
+                <input type="text" name="doctor_name" class="form-control" required placeholder="输入医师姓名">
+            </div>
+            <div class="form-group">
+                <label>检查项目</label>
+                <input type="text" name="item_name" class="form-control" required placeholder="例如：CT平扫">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">保存</button>
+        </form>
+    </div>
+</div>
+
+<!-- Import Record Modal -->
+<div id="importModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeImportModal()">&times;</span>
+        <h3 class="modal-title">导入工作记录</h3>
+        <form action="{{ url_for('import_workload_records') }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>选择 Excel 文件 (.xlsx, .xls)</label>
+                <input type="file" name="file" class="form-control" accept=".xlsx, .xls" required>
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    请确保文件包含以下列名：报告日期、报告医师、检查项目。<br>
+                    系统将自动忽略其他列。
+                </small>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">开始导入</button>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Monthly Data Modal -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+        <h3 class="modal-title" style="color: #dc3545;">删除整月数据</h3>
+
+        <!-- Permanent Warning Message (Plain Text) -->
+        <div style="color: #dc3545; margin-bottom: 1.5rem; font-weight: bold; text-align: left;">
+            ⚠️ 警告：此操作将永久删除所选月份的所有工作量记录，无法恢复！
+        </div>
+
+        <div class="form-group">
+            <label>选择年份</label>
+            <select id="deleteYear" class="form-control">
+                {% for y in range(2025, 2031) %}
+                <option value="{{ y }}" {% if y==current_year %}selected{% endif %}>{{ y }}年</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>选择月份</label>
+            <select id="deleteMonth" class="form-control">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m==current_month %}selected{% endif %}>{{ m }}月</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Checkbox Confirmation -->
+        <div class="form-group" style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="confirmCheckbox" onchange="toggleDeleteButton()"
+                style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="confirmCheckbox"
+                style="margin-bottom: 0; color: #dc3545; font-weight: bold; cursor: pointer;">我已知晓后果，确认删除</label>
+        </div>
+
+        <button type="button" id="deleteBtn" class="btn-primary"
+            style="width: 100%; margin-top: 1rem; background: #dc3545 !important; border-color: #dc3545 !important; opacity: 0.5; cursor: not-allowed;"
+            onclick="confirmDelete()" disabled>确认删除</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleActions() {
+        var actions = document.getElementById('pageActions');
+        actions.classList.toggle('show');
+    }
+
+    // Close actions when clicking outside
+    window.addEventListener('click', function (e) {
+        var actions = document.getElementById('pageActions');
+        var btn = document.querySelector('.action-toggle-btn');
+        if (!actions.contains(e.target) && !btn.contains(e.target) && actions.classList.contains('show')) {
+            actions.classList.remove('show');
+        }
+    });
+
+    function openAddModal() {
+        document.getElementById('addModal').style.display = 'flex';
+    }
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    function openImportModal() {
+        document.getElementById('importModal').style.display = 'flex';
+    }
+    function closeImportModal() {
+        document.getElementById('importModal').style.display = 'none';
+    }
+
+    function openDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'flex';
+        // Reset state when opening
+        document.getElementById('confirmCheckbox').checked = false;
+        toggleDeleteButton();
+    }
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function toggleDeleteButton() {
+        const checkbox = document.getElementById('confirmCheckbox');
+        const btn = document.getElementById('deleteBtn');
+
+        if (checkbox.checked) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+
+    function confirmDelete() {
+        const year = document.getElementById('deleteYear').value;
+        const month = document.getElementById('deleteMonth').value;
+        const btn = document.getElementById('deleteBtn');
+
+        // Double check just in case
+        if (!document.getElementById('confirmCheckbox').checked) {
+            return;
+        }
+
+        // Disable button to prevent double submit
+        btn.disabled = true;
+        btn.innerText = '删除中...';
+
+        fetch('{{ url_for("delete_monthly_workload") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ year: year, month: month })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('删除失败: ' + data.message);
+                    // Re-enable button on failure
+                    btn.disabled = false;
+                    btn.innerText = '确认删除';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('发生错误，请重试: ' + error);
+                btn.disabled = false;
+                btn.innerText = '确认删除';
+            });
+    }
+
+    window.addEventListener('click', function (e) {
+        if (e.target == document.getElementById('addModal')) {
+            closeAddModal();
+        }
+        if (e.target == document.getElementById('importModal')) {
+            closeImportModal();
+        }
+        if (e.target == document.getElementById('deleteModal')) {
+            closeDeleteModal();
+        }
+
+        // Close filter dropdowns if clicking outside
+        if (!e.target.closest('th')) {
+            document.querySelectorAll('.filter-dropdown').forEach(d => {
+                d.classList.remove('show');
+                d.closest('th').style.zIndex = ''; // Reset z-index
+            });
+        }
+    });
+
+    // Filter Logic
+    let activeFilters = {
+        0: new Set(), // Date
+        1: new Set(), // Doctor
+        3: new Set()  // Score
+    };
+
+    function toggleFilter(event, colIndex) {
+        event.stopPropagation();
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const isShown = dropdown.classList.contains('show');
+
+        // Close all others and reset z-index
+        document.querySelectorAll('.filter-dropdown').forEach(d => {
+            d.classList.remove('show');
+            d.closest('th').style.zIndex = '';
+        });
+
+        if (!isShown) {
+            populateFilterOptions(colIndex);
+            dropdown.classList.add('show');
+            dropdown.closest('th').style.zIndex = '1000'; // Bring to front
+        }
+    }
+
+    function populateFilterOptions(colIndex) {
+        const table = document.getElementById('recordsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+
+        // Collect unique values
+        const values = new Set();
+        rows.forEach(row => {
+            if (row.cells.length < 2) return;
+            const cell = row.cells[colIndex];
+            if (cell) values.add(cell.textContent.trim());
+        });
+
+        const sortedValues = Array.from(values).sort();
+        const currentSelection = activeFilters[colIndex];
+        const isAllSelected = currentSelection.size === 0; // Empty set means "All"
+
+        let html = `
+            <div class="filter-option" onclick="toggleSelectAll(event, ${colIndex}, this)">
+                <input type="checkbox" ${isAllSelected ? 'checked' : ''}>
+                <span>(全选)</span>
+            </div>
+            <div style="height: 1px; background: var(--border-color, #eee); margin: 4px 0;"></div>
+        `;
+
+        sortedValues.forEach(val => {
+            if (val === '暂无记录') return;
+            const isChecked = isAllSelected || currentSelection.has(val);
+            html += `
+                <div class="filter-option" onclick="toggleOption(event, ${colIndex}, '${val}', this)">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''}>
+                    <span>${val}</span>
+                </div>
+            `;
+        });
+
+        // Add actions
+        html += `
+            <div class="filter-actions">
+                <button class="filter-btn" onclick="clearFilter(${colIndex})">清除</button>
+                <button class="filter-btn" style="font-weight:bold;" onclick="closeFilter(${colIndex})">确定</button>
+            </div>
+        `;
+
+        dropdown.innerHTML = html;
+    }
+
+    function toggleSelectAll(event, colIndex, el) {
+        const checkbox = el.querySelector('input');
+        // Only toggle manually if the click target wasn't the checkbox itself
+        if (event.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+        }
+
+        const isChecked = checkbox.checked;
+
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const options = dropdown.querySelectorAll('.filter-option:not(:first-child) input');
+
+        options.forEach(opt => opt.checked = isChecked);
+
+        applyFilterFromUI(colIndex);
+    }
+
+    function toggleOption(event, colIndex, val, el) {
+        const checkbox = el.querySelector('input');
+        // Only toggle manually if the click target wasn't the checkbox itself
+        if (event.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+        }
+
+        // Uncheck "Select All" if any option is unchecked
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const allCheckbox = dropdown.querySelector('.filter-option:first-child input');
+        const allOptions = dropdown.querySelectorAll('.filter-option:not(:first-child) input');
+        const allChecked = Array.from(allOptions).every(opt => opt.checked);
+
+        allCheckbox.checked = allChecked;
+
+        applyFilterFromUI(colIndex);
+    }
+
+    function applyFilterFromUI(colIndex) {
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const allCheckbox = dropdown.querySelector('.filter-option:first-child input');
+
+        if (allCheckbox.checked) {
+            activeFilters[colIndex].clear(); // Empty set = All
+        } else {
+            const selected = new Set();
+            dropdown.querySelectorAll('.filter-option:not(:first-child)').forEach(opt => {
+                if (opt.querySelector('input').checked) {
+                    selected.add(opt.querySelector('span').textContent.trim());
+                }
+            });
+            activeFilters[colIndex] = selected;
+        }
+
+        updateTable();
+        updateIcon(colIndex);
+    }
+
+    function clearFilter(colIndex) {
+        activeFilters[colIndex].clear();
+        updateTable();
+        updateIcon(colIndex);
+        closeFilter(colIndex);
+    }
+
+    function closeFilter(colIndex) {
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        dropdown.classList.remove('show');
+        dropdown.closest('th').style.zIndex = '';
+    }
+
+    function updateIcon(colIndex) {
+        const icon = document.querySelector(`th:nth-child(${colIndex + 1}) .filter-icon`);
+        const isAll = activeFilters[colIndex].size === 0;
+
+        if (!isAll) {
+            icon.classList.add('active');
+        } else {
+            icon.classList.remove('active');
+        }
+    }
+
+    function updateTable() {
+        const table = document.getElementById('recordsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        rows.forEach(row => {
+            if (row.cells.length < 2) return; // Skip "No records" row
+
+            let show = true;
+            for (let idx in activeFilters) {
+                const filterSet = activeFilters[idx];
+                if (filterSet.size > 0) {
+                    const cellText = row.cells[idx].textContent.trim();
+                    if (!filterSet.has(cellText)) {
+                        show = false;
+                        break;
+                    }
+                }
+            }
+            row.style.display = show ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

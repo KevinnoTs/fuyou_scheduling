@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<style>
+    /* Responsive Table Styles */
+    .table-container {
+        overflow-x: auto;
+        /* Enable horizontal scrolling */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        width: 100%;
+        min-width: 600px;
+        /* Force scroll on small screens */
+        border-collapse: collapse;
+    }
+
+    th,
+    td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Item Name Column: Allow wrapping */
+    td.item-name {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 200px;
+        /* Ensure enough width for text */
+    }
+
+    /* Integrated Summary Styling */
+    .summary-bar {
+        display: flex;
+        gap: 2rem;
+        margin-right: 1rem;
+        align-items: center;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+
+    .summary-label {
+        font-size: 0.9rem;
+        color: var(--text-light);
+    }
+
+    .summary-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+</style>
+
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2 style="flex-grow: 1;">{{ doctor.name }} - {{ date.year }}年{{ date.month }}月{{ date.day }}日 工作量</h2>
+
+        <div class="summary-bar">
+            <div class="summary-item">
+                <span class="summary-label">项目数:</span>
+                <span class="summary-value">{{ total_items }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">总分:</span>
+                <span class="summary-value">{{ total_score }}</span>
+            </div>
+        </div>
+
+        <div class="action-bar" style="position: static; box-shadow: none; padding: 0; background: none;">
+            <a href="{{ url_for('doctor_workload_calendar', doctor_id=doctor.id, year=date.year, month=date.month) }}"
+                class="btn-outline">返回日历</a>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>项目名称</th>
+                    <th style="width: 80px; text-align: right; white-space: nowrap;">分值</th>
+                    <th style="width: 80px; text-align: center; white-space: nowrap;">数量</th>
+                    <th style="width: 100px; text-align: right; white-space: nowrap;">总分</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in daily_items %}
+                <tr>
+                    <td class="item-name">{{ item.name }}</td>
+                    <td style="text-align: right; color: var(--text-light);">{{ item.score }}</td>
+                    <td style="text-align: center;">{{ item.count }}</td>
+                    <td style="text-align: right; font-weight: bold; color: var(--primary-color);">{{ item.total }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--text-light); padding: 2rem;">
+                        当日无工作记录
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

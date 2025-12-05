@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<style>
+    .filter-icon {
+        cursor: pointer;
+        margin-left: 5px;
+        font-size: 0.8em;
+        color: var(--text-light);
+        transition: all 0.2s;
+        display: inline-block;
+    }
+
+    .filter-icon:hover {
+        color: var(--primary-color);
+    }
+
+    .filter-icon.active {
+        color: #dc3545 !important;
+        font-weight: bold;
+        transform: scale(1.2);
+    }
+
+    .filter-dropdown {
+        position: absolute;
+        background: var(--white);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        box-shadow: var(--shadow-md);
+        z-index: 1000;
+        min-width: 200px;
+        max-height: 350px;
+        overflow-y: auto;
+        display: none;
+        text-align: left;
+        padding: 0.5rem 0;
+    }
+
+    body.dark .filter-dropdown {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-dropdown.show {
+        display: block;
+    }
+
+    .filter-option {
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-main);
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-option:hover {
+        background-color: var(--bg-light);
+    }
+
+    .filter-option input[type="checkbox"] {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary-color);
+    }
+
+    .filter-actions {
+        padding: 8px 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        margin-top: 4px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    body.dark .filter-actions {
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-btn {
+        font-size: 0.85rem;
+        padding: 4px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--primary-color);
+    }
+
+    .filter-btn:hover {
+        background: var(--bg-light);
+    }
+
+    th {
+        position: relative;
+    }
+</style>
+
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2 style="flex-grow: 1;">分值设定</h2>
+
+        <button class="action-toggle-btn" onclick="toggleActions()">
+            ☰
+        </button>
+
+        <div class="action-bar" id="pageActions">
+            <div class="action-content-wrapper">
+                <input type="text" id="searchInput" class="form-control" placeholder="搜索检查项目..."
+                    style="width: 200px; display: inline-block;" onkeyup="filterTable()">
+
+                {% if current_user.role in ['admin', 'super_admin'] %}
+                <button class="btn-primary" onclick="openAddModal()">+ 添加分值</button>
+                <button class="btn-primary" onclick="openImportModal()">导入分值</button>
+                <button class="btn-primary" onclick="openExportModal()">导出列表</button>
+                {% endif %}
+                <a href="{{ url_for('workload_stats') }}" class="btn-outline">返回</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="scoresTable">
+            <thead>
+                <tr>
+                    <th>检查项目</th>
+                    <th>
+                        分值 <span class="filter-icon" onclick="toggleFilter(event, 1)">▼</span>
+                        <div class="filter-dropdown" id="filter-dropdown-1"></div>
+                    </th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.item_name }}</td>
+                    <td>
+                        {% if item.score is not none %}
+                        <span style="font-weight: bold; color: var(--primary-color);">{{ item.score }}</span>
+                        {% else %}
+                        <span style="color: #dc3545; font-size: 0.9rem;">未配置</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn-outline" style="padding: 2px 8px; font-size: 0.8rem;"
+                            onclick="editScore('{{ item.item_name }}', '{{ item.score if item.score is not none else '' }}')">
+                            {{ '修改' if item.score is not none else '设置' }}
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-light);">暂无数据</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit Score Modal -->
+<div id="addModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeAddModal()">&times;</span>
+        <h3 class="modal-title" id="modalTitle">添加分值</h3>
+        <form method="post">
+            <div class="form-group">
+                <label>检查项目</label>
+                <input type="text" name="item_name" id="item_name" class="form-control" required placeholder="例如：CT平扫">
+                <small style="color: var(--text-light);">如果项目已存在，将更新其分值。</small>
+            </div>
+            <div class="form-group">
+                <label>分值</label>
+                <input type="number" step="0.1" name="score" id="score" class="form-control" required
+                    placeholder="例如：10.5">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">保存</button>
+        </form>
+    </div>
+</div>
+
+<!-- Import Score Modal -->
+<div id="importModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeImportModal()">&times;</span>
+        <h3 class="modal-title">导入分值设定</h3>
+        <form action="{{ url_for('import_workload_scores') }}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>选择 Excel 文件 (.xlsx, .xls)</label>
+                <input type="file" name="file" class="form-control" accept=".xlsx, .xls" required>
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    请确保文件包含以下列名：检查项目、分值。<br>
+                    系统将根据“检查项目”覆盖或添加分值。
+                </small>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">开始导入</button>
+        </form>
+    </div>
+</div>
+
+<!-- Export Score Modal -->
+<div id="exportModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeExportModal()">&times;</span>
+        <h3 class="modal-title">导出分值列表</h3>
+        <form action="{{ url_for('export_workload_scores') }}" method="get">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 0.5rem;">选择导出范围：</label>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="type" value="unconfigured" checked
+                            style="accent-color: var(--primary-color);">
+                        仅导出未配置项目
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="radio" name="type" value="all" style="accent-color: var(--primary-color);">
+                        导出所有记录
+                    </label>
+                </div>
+                <small style="color: var(--text-light); display: block; margin-top: 0.5rem;">
+                    导出文件为 Excel 格式，包含检查项目、分值和配置状态。
+                </small>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;"
+                onclick="setTimeout(closeExportModal, 500)">开始导出</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleActions() {
+        var actions = document.getElementById('pageActions');
+        actions.classList.toggle('show');
+    }
+
+    // Close actions when clicking outside
+    window.addEventListener('click', function (e) {
+        var actions = document.getElementById('pageActions');
+        var btn = document.querySelector('.action-toggle-btn');
+        if (!actions.contains(e.target) && !btn.contains(e.target) && actions.classList.contains('show')) {
+            actions.classList.remove('show');
+        }
+    });
+
+    function openAddModal() {
+        document.getElementById('modalTitle').innerText = '添加分值';
+        document.getElementById('item_name').value = '';
+        document.getElementById('item_name').readOnly = false;
+        document.getElementById('score').value = '';
+        document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function editScore(name, score) {
+        document.getElementById('modalTitle').innerText = '修改分值';
+        document.getElementById('item_name').value = name;
+        document.getElementById('score').value = score;
+        document.getElementById('addModal').style.display = 'flex';
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    function openImportModal() {
+        document.getElementById('importModal').style.display = 'flex';
+    }
+    function closeImportModal() {
+        document.getElementById('importModal').style.display = 'none';
+    }
+
+    function openExportModal() {
+        document.getElementById('exportModal').style.display = 'flex';
+    }
+    function closeExportModal() {
+        document.getElementById('exportModal').style.display = 'none';
+    }
+
+    window.addEventListener('click', function (e) {
+        if (e.target == document.getElementById('addModal')) {
+            closeAddModal();
+        }
+        if (e.target == document.getElementById('importModal')) {
+            closeImportModal();
+        }
+        if (e.target == document.getElementById('exportModal')) {
+            closeExportModal();
+        }
+
+        // Close filter dropdowns if clicking outside
+        if (!e.target.closest('th')) {
+            document.querySelectorAll('.filter-dropdown').forEach(d => {
+                d.classList.remove('show');
+                d.closest('th').style.zIndex = '';
+            });
+        }
+    });
+
+    // Search Logic
+    function filterTable() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('scoresTable');
+        const tr = table.getElementsByTagName('tr');
+
+        // We need to respect both Search AND Filter
+        // But for simplicity, let's just re-apply both
+        applyCombinedFilter();
+    }
+
+    // Filter Logic
+    let activeFilters = {
+        1: new Set() // Score
+    };
+
+    function toggleFilter(event, colIndex) {
+        event.stopPropagation();
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const isShown = dropdown.classList.contains('show');
+
+        document.querySelectorAll('.filter-dropdown').forEach(d => {
+            d.classList.remove('show');
+            d.closest('th').style.zIndex = '';
+        });
+
+        if (!isShown) {
+            populateFilterOptions(colIndex);
+            dropdown.classList.add('show');
+            dropdown.closest('th').style.zIndex = '1000';
+        }
+    }
+
+    function populateFilterOptions(colIndex) {
+        const table = document.getElementById('scoresTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+
+        const values = new Set();
+        rows.forEach(row => {
+            if (row.cells.length < 3) return;
+            const cell = row.cells[colIndex];
+            values.add(cell.textContent.trim());
+        });
+
+        const sortedValues = Array.from(values).sort();
+        const currentSelection = activeFilters[colIndex];
+        const isAllSelected = currentSelection.size === 0;
+
+        let html = `
+            <div class="filter-option" onclick="toggleSelectAll(event, ${colIndex}, this)">
+                <input type="checkbox" ${isAllSelected ? 'checked' : ''}>
+                <span>(全选)</span>
+            </div>
+            <div style="height: 1px; background: var(--border-color, #eee); margin: 4px 0;"></div>
+        `;
+
+        sortedValues.forEach(val => {
+            if (val === '暂无数据') return;
+            const isChecked = isAllSelected || currentSelection.has(val);
+            html += `
+                <div class="filter-option" onclick="toggleOption(event, ${colIndex}, '${val}', this)">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''}>
+                    <span>${val}</span>
+                </div>
+            `;
+        });
+
+        html += `
+            <div class="filter-actions">
+                <button class="filter-btn" onclick="clearFilter(${colIndex})">清除</button>
+                <button class="filter-btn" style="font-weight:bold;" onclick="closeFilter(${colIndex})">确定</button>
+            </div>
+        `;
+
+        dropdown.innerHTML = html;
+    }
+
+    function toggleSelectAll(event, colIndex, el) {
+        const checkbox = el.querySelector('input');
+        if (event.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+        }
+
+        const isChecked = checkbox.checked;
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const options = dropdown.querySelectorAll('.filter-option:not(:first-child) input');
+
+        options.forEach(opt => opt.checked = isChecked);
+        applyFilterFromUI(colIndex);
+    }
+
+    function toggleOption(event, colIndex, val, el) {
+        const checkbox = el.querySelector('input');
+        if (event.target !== checkbox) {
+            checkbox.checked = !checkbox.checked;
+        }
+
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const allCheckbox = dropdown.querySelector('.filter-option:first-child input');
+        const allOptions = dropdown.querySelectorAll('.filter-option:not(:first-child) input');
+        const allChecked = Array.from(allOptions).every(opt => opt.checked);
+
+        allCheckbox.checked = allChecked;
+        applyFilterFromUI(colIndex);
+    }
+
+    function applyFilterFromUI(colIndex) {
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        const allCheckbox = dropdown.querySelector('.filter-option:first-child input');
+
+        if (allCheckbox.checked) {
+            activeFilters[colIndex].clear();
+        } else {
+            const selected = new Set();
+            dropdown.querySelectorAll('.filter-option:not(:first-child)').forEach(opt => {
+                if (opt.querySelector('input').checked) {
+                    selected.add(opt.querySelector('span').textContent.trim());
+                }
+            });
+            activeFilters[colIndex] = selected;
+        }
+
+        applyCombinedFilter();
+        updateIcon(colIndex);
+    }
+
+    function clearFilter(colIndex) {
+        activeFilters[colIndex].clear();
+        applyCombinedFilter();
+        updateIcon(colIndex);
+        closeFilter(colIndex);
+    }
+
+    function closeFilter(colIndex) {
+        const dropdown = document.getElementById(`filter-dropdown-${colIndex}`);
+        dropdown.classList.remove('show');
+        dropdown.closest('th').style.zIndex = '';
+    }
+
+    function updateIcon(colIndex) {
+        const icon = document.querySelector(`th:nth-child(${colIndex + 1}) .filter-icon`);
+        const isAll = activeFilters[colIndex].size === 0;
+
+        if (!isAll) {
+            icon.classList.add('active');
+        } else {
+            icon.classList.remove('active');
+        }
+    }
+
+    function applyCombinedFilter() {
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput.value.toLowerCase();
+
+        const table = document.getElementById('scoresTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        rows.forEach(row => {
+            if (row.cells.length < 3) return; // Skip "No data"
+
+            // 1. Search Filter (Item Name is col 0)
+            const itemName = row.cells[0].textContent.toLowerCase();
+            if (searchTerm && !itemName.includes(searchTerm)) {
+                row.style.display = 'none';
+                return;
+            }
+
+            // 2. Column Filter (Score is col 1)
+            let show = true;
+            for (let idx in activeFilters) {
+                const filterSet = activeFilters[idx];
+                if (filterSet.size > 0) {
+                    const cellText = row.cells[idx].textContent.trim();
+                    if (!filterSet.has(cellText)) {
+                        show = false;
+                        break;
+                    }
+                }
+            }
+
+            row.style.display = show ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
