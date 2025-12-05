@@ -12,9 +12,9 @@
     .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, minmax(130px, 1fr));
-        gap: 1px;
-        background-color: var(--border-color, #eee);
-        border: 1px solid var(--border-color, #eee);
+        gap: 2px;
+        background-color: #bbb;
+        border: 2px solid #bbb;
         border-radius: 8px;
     }
 
@@ -53,7 +53,7 @@
 
     .date-number {
         font-weight: 700;
-        font-size: 1.4rem;
+        font-size: 2.2rem;
         margin-bottom: 8px;
         line-height: 1;
         color: var(--primary-color);
@@ -112,6 +112,16 @@
         background-color: #2d2d2d;
     }
 
+    /* Dark Mode Overrides for Calendar Grid and Text */
+    body.dark .calendar-grid {
+        background-color: #444;
+        border-color: #444;
+    }
+
+    body.dark .stat-label {
+        color: #bbb;
+    }
+
     .stat-item {
         font-size: 0.8rem;
         margin-bottom: 2px;
@@ -123,6 +133,8 @@
 
     .stat-label {
         font-size: 0.75rem;
+        color: #555;
+        font-weight: bold;
     }
 
     .stat-value {
@@ -160,6 +172,36 @@
         font-weight: bold;
         color: var(--primary-color);
     }
+
+    .empty-mark {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        /* Slighly larger */
+        font-weight: bold;
+        color: #555;
+        /* Same as stat-label light */
+        opacity: 1;
+    }
+
+    body.dark .empty-mark {
+        color: #bbb;
+        /* Same as stat-label dark */
+    }
+
+    /* Empty cell styling for start/end of month */
+    .empty-cell {
+        background-color: var(--bg-light);
+        opacity: 0.5;
+    }
+
+    body.dark .empty-cell {
+        background-color: #666;
+        /* Lighter gray as requested */
+        opacity: 0.2;
+    }
 </style>
 
 <div class="card full-screen-card">
@@ -196,7 +238,7 @@
 
             {% for day_data in calendar_data %}
             {% if day_data is none %}
-            <div class="calendar-cell" style="background-color: var(--bg-light); opacity: 0.5;"></div>
+            <div class="calendar-cell empty-cell"></div>
             {% else %}
             <a href="{{ url_for('doctor_daily_workload', doctor_id=doctor.id, year=current_year, month=current_month, day=day_data.day) }}"
                 class="calendar-link">
@@ -222,8 +264,7 @@
                         </div>
                     </div>
                     {% else %}
-                    <div
-                        style="flex-grow: 1; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.8rem; opacity: 0.3;">
+                    <div class="empty-mark">
                         /
                     </div>
                     {% endif %}

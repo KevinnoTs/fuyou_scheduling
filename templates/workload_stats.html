@@ -52,10 +52,10 @@
             </thead>
             <tbody>
                 {% for item in stats %}
-                <tr>
+                <tr {% if current_user.doctor_id==item.doctor.id %}class="current-user-row" {% endif %}>
                     <td>
                         <a href="{{ url_for('doctor_workload_calendar', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
-                            style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
+                            style="color: var(--primary-color); text-decoration: none; font-weight: bold;">
                             {{ item.doctor.name }}
                         </a>
                     </td>

@@ -146,12 +146,15 @@
         <button class="navbar-toggle" onclick="toggleNavbar()">☰</button>
         <div class="navbar-nav" id="navbarNav">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('schedule') }}" class="nav-btn">📅 <span>排班表</span></a>
-            <a href="{{ url_for('workload_stats') }}" class="nav-btn">📊 <span>工作量统计</span></a>
-            <a href="{{ url_for('doctors_list') }}" class="nav-btn">👨‍⚕️ <span>医生列表</span></a>
+            <a href="{{ url_for('schedule') }}" class="nav-btn"><span class="nav-icon">📅</span> <span>排班表</span></a>
+            <a href="{{ url_for('workload_stats') }}" class="nav-btn"><span class="nav-icon">📊</span>
+                <span>工作量统计</span></a>
+            <a href="{{ url_for('doctors_list') }}" class="nav-btn"><span class="nav-icon">👨‍⚕️</span>
+                <span>医生列表</span></a>
             {% if current_user.role in ['admin', 'super_admin'] %}
-            <a href="{{ url_for('users_list') }}" class="nav-btn">👥 <span>用户列表</span></a>
-            <a href="{{ url_for('holidays_list') }}" class="nav-btn">🏖️ <span>节假日管理</span></a>
+            <a href="{{ url_for('users_list') }}" class="nav-btn"><span class="nav-icon">👥</span> <span>用户列表</span></a>
+            <a href="{{ url_for('holidays_list') }}" class="nav-btn"><span class="nav-icon">🏖️</span>
+                <span>节假日管理</span></a>
             {% endif %}
 
             <!-- 用户下拉菜单 -->
@@ -160,8 +163,8 @@
                     {{ current_user.real_name or current_user.username }} ▼
                 </button>
                 <div class="dropdown-content" id="userDropdown">
-                    <a href="#" onclick="openThemeModal(event)"><span class="menu-icon">🎨</span> 显示设置</a>
-                    <a href="{{ url_for('logout') }}"><span class="menu-icon">🚪</span> 退出登录</a>
+                    <a href="#" onclick="openThemeModal(event)"><span class="menu-icon nav-icon">🎨</span> 显示设置</a>
+                    <a href="{{ url_for('logout') }}"><span class="menu-icon nav-icon">🚪</span> 退出登录</a>
                 </div>
             </div>
             {% else %}

@@ -9,6 +9,7 @@ import openpyxl
 import xlrd
 from io import BytesIO
 from urllib.parse import quote
+from pypinyin import lazy_pinyin
 
 def register_workload_routes(app):
     
@@ -485,10 +486,8 @@ def register_workload_routes(app):
                 'is_configured': score_obj is not None
             })
             
-        # Sort: Unconfigured (score is None) first, then by Name (Chinese Pinyin order is hard, using Unicode)
-        # Python's default string sort is Unicode code point, which is roughly acceptable for "汉字排列"
-        # To strictly sort by Pinyin requires pypinyin, but user likely just means "some consistent order"
-        unified_list.sort(key=lambda x: (x['is_configured'], x['item_name']))
+        # Sort: By Name using Pinyin
+        unified_list.sort(key=lambda x: ''.join(lazy_pinyin(x['item_name'])))
 
         return render_template('workload_settings.html', 
                              items=unified_list, 
