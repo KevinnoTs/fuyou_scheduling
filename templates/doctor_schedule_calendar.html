@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
+{% block content %}
+<style>
+    .calendar-container {
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(130px, 1fr));
+        gap: 2px;
+        background-color: #bbb;
+        border: 2px solid #bbb;
+        border-radius: 8px;
+    }
+
+    .calendar-header {
+        background-color: var(--bg-light);
+        padding: 12px;
+        text-align: center;
+        font-weight: bold;
+        color: var(--text-light);
+        font-size: 0.95rem;
+    }
+
+    .calendar-cell {
+        background-color: var(--white);
+        aspect-ratio: 1 / 1;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .calendar-cell:hover {
+        background-color: var(--bg-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1;
+    }
+
+    .date-number {
+        font-weight: 700;
+        font-size: 2.2rem;
+        margin-bottom: 8px;
+        line-height: 1;
+        color: var(--primary-color);
+    }
+
+    .calendar-cell.holiday .date-number {
+        color: #dc3545;
+    }
+
+    /* Weekend visual is handled by .date-number color, not bg in this style */
+    .calendar-cell.weekend .date-number {
+        color: #6c757d;
+    }
+
+    .calendar-tag {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 0.75rem;
+        padding: 1px 4px;
+        border-radius: 4px;
+        line-height: 1;
+        font-weight: normal;
+        border: 1px solid;
+        background-color: var(--white);
+    }
+
+    .tag-holiday {
+        color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .tag-workday {
+        color: var(--text-main);
+        border-color: var(--text-light);
+    }
+
+    body.dark .tag-workday {
+        color: var(--text-main);
+        border-color: var(--text-light);
+        background-color: #2d2d2d;
+    }
+
+    body.dark .tag-holiday {
+        background-color: #2d2d2d;
+    }
+
+    /* Dark Mode Overrides */
+    body.dark .calendar-grid {
+        background-color: #444;
+        border-color: #444;
+    }
+
+    .shift-content {
+        margin-top: auto;
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .empty-mark {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #555;
+        opacity: 0.5;
+    }
+
+    body.dark .empty-mark {
+        color: #bbb;
+    }
+
+    .empty-cell {
+        background-color: var(--bg-light);
+        opacity: 0.5;
+    }
+
+    body.dark .empty-cell {
+        background-color: #666;
+        opacity: 0.2;
+    }
+</style>
+
+<div class="card full-screen-card">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
+        <h2 style="flex-grow: 1;">{{ doctor.name }} - {{ current_year }}年{{ current_month }}月 排班详情</h2>
+
+        <div class="action-bar" style="position: static; box-shadow: none; padding: 0; background: none;">
+            <a href="{{ url_for('schedule', year=current_year, month=current_month) }}" class="btn-outline">返回排班表</a>
+        </div>
+    </div>
+
+    <div class="calendar-container">
+        <div class="calendar-grid">
+            <div class="calendar-header">周一</div>
+            <div class="calendar-header">周二</div>
+            <div class="calendar-header">周三</div>
+            <div class="calendar-header">周四</div>
+            <div class="calendar-header">周五</div>
+            <div class="calendar-header" style="color: #dc3545;">周六</div>
+            <div class="calendar-header" style="color: #dc3545;">周日</div>
+
+            {% for day_data in calendar_data %}
+            {% if day_data is none %}
+            <div class="calendar-cell empty-cell"></div>
+            {% else %}
+            <div class="calendar-cell {{ day_data.status }}">
+                <div class="date-number">{{ day_data.day }}</div>
+
+                {% if day_data.status == 'holiday' %}
+                <div class="calendar-tag tag-holiday">{{ day_data.holiday_name if day_data.holiday_name else '休' }}
+                </div>
+                {% elif day_data.status == 'workday' and (loop.index % 7 == 6 or loop.index % 7 == 0) %}
+                <div class="calendar-tag tag-workday">班</div>
+                {% endif %}
+
+                {% if day_data.shift_type %}
+                <div class="shift-content">
+                    {% set shift = day_data.shift_type %}
+                    {% set cls = '' %}
+                    {% if '休' in shift or '假' in shift or '探亲' in shift %}
+                    {% set cls = 'shift-rest-type' %}
+                    {% elif '值' in shift or '夜' in shift %}
+                    {% set cls = 'shift-duty-type' %}
+                    {% elif '放射' in shift %}
+                    {% set cls = 'shift-radiation' %}
+                    {% endif %}
+                    <span class="{{ cls }}">{{ shift }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

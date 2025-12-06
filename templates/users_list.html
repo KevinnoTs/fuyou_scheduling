@@ -48,9 +48,12 @@
                         {% elif user.role == 'admin' %}
                         <span
                             style="background-color: #e67e22; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">管理员</span>
+                        {% elif user.role == 'assistant' %}
+                        <span
+                            style="background-color: #b2bec3; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">普通医助</span>
                         {% else %}
                         <span
-                            style="background-color: #b2bec3; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">普通用户</span>
+                            style="background-color: #3498db; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">普通医师</span>
                         {% endif %}
                     </td>
                     <td>

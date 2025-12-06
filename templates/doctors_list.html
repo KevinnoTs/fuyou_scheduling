@@ -79,21 +79,25 @@
                     <td>{{ doctor.gender }}</td>
                     <td>{{ doctor.title }}</td>
                     <td>
+                        {% if '医助' not in (doctor.title or '') %}
                         {% if doctor.specialty %}
                         {% for sp in doctor.specialty.split(',') %}
                         <span class="specialty-tag">{{ sp }}</span>
                         {% endfor %}
                         {% endif %}
+                        {% endif %}
                     </td>
                     <td>
+                        {% if '医助' not in (doctor.title or '') %}
                         <span style="font-weight: bold; color: var(--primary-color);">{{ doctor.used_annual_leave_days
                             }}</span> / {{ doctor.annual_leave_days }}
+                        {% endif %}
                     </td>
                     <td>
                         {% if doctor.status == 'active' %}
                         <span style="color: var(--primary-color); font-weight: bold;">在职</span>
                         {% else %}
-                        <span style="color: #d63031;">离职</span>
+                        <span style="color: #d63031; font-weight: bold;">离职</span>
                         <div style="font-size: 0.8rem; color: var(--text-light);">{{
                             doctor.resignation_date.strftime('%Y-%m') }}</div>
                         {% endif %}

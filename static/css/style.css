@@ -360,7 +360,7 @@ body.dark .navbar-toggle,
 
 .btn-outline:hover {
     background-color: var(--primary-color);
-    color: #FFFFFF;
+    color: #FFFFFF !important;
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
@@ -1010,20 +1010,22 @@ body.dark .alert {
 }
 
 /* Current User Row Highlighting */
-.current-user-row {
-    background-color: #f0f9ff;
+/* Current User Row Highlighting */
+/* Apply to TDs to differentiate intersection from row bg */
+.current-user-row>td {
+    background-color: #f0f9ff !important;
 }
 
-body.dark .current-user-row {
-    background-color: rgba(214, 140, 115, 0.15);
+body.dark .current-user-row>td {
+    background-color: rgba(214, 140, 115, 0.15) !important;
 }
 
-.current-user-row:hover td {
-    background-color: #e1f5fe;
+.current-user-row:hover>td {
+    background-color: #e1f5fe !important;
 }
 
-body.dark .current-user-row:hover td {
-    background-color: rgba(214, 140, 115, 0.25);
+body.dark .current-user-row:hover>td {
+    background-color: rgba(214, 140, 115, 0.25) !important;
 }
 
 /* Responsive Footer */
@@ -1075,3 +1077,302 @@ body.dark .readonly-input {
 .user-name {
     font-weight: bold;
 }
+
+/* Schedule Page Styles */
+.schedule-container {
+    background-color: var(--white);
+    border-radius: var(--radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px);
+}
+
+body.dark .schedule-container {
+    background-color: var(--white);
+}
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.date-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.input-year,
+.input-month {
+    padding: 0.4rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 4px;
+    background: var(--bg-light);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+}
+
+.schedule-table-wrapper {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    position: relative;
+    max-height: 80vh;
+}
+
+.schedule-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
+}
+
+.schedule-table th,
+.schedule-table td {
+    padding: 0.4rem 0.6rem;
+    text-align: center;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle;
+}
+
+.schedule-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8f9fa;
+    color: var(--text-main);
+}
+
+.schedule-table thead tr:nth-child(2) th {
+    top: 35px;
+}
+
+.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    background-color: #fff;
+    border-right: 2px solid rgba(0, 0, 0, 0.1);
+    width: 4rem;
+    min-width: 4rem;
+    max-width: 4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    /* Enforce centering */
+}
+
+.schedule-table thead th.sticky-col {
+    z-index: 20;
+    background-color: #f8f9fa;
+}
+
+.holiday-col {
+    color: #e74c3c !important;
+    font-weight: bold;
+}
+
+body.dark .table-container th.holiday-col,
+body.dark .table-container td.holiday-col,
+body.dark .holiday-col {
+    color: #ff6b6b !important;
+    /* Lighter red for dark mode */
+}
+
+.spacer-row td {
+    height: 20px;
+    background-color: var(--bg-light);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.spacer-row:hover td {
+    background-color: var(--bg-light) !important;
+}
+
+.spacer-row .sticky-col {
+    background-color: var(--bg-light) !important;
+}
+
+.schedule-cell,
+.schedule-table th:not(.sticky-col) {
+    width: 2.5rem;
+    min-width: 2.5rem;
+    max-width: 2.5rem;
+    padding: 0.4rem 0.2rem;
+    /* Reduce padding to fit */
+    font-size: 0.95rem;
+    text-align: center;
+    /* Enforce centering */
+}
+
+body.dark .schedule-table thead th {
+    background-color: #2d2d2d;
+}
+
+body.dark .sticky-col {
+    background-color: #2d2d2d;
+}
+
+body.dark .schedule-table thead th.sticky-col {
+    background-color: #2d2d2d;
+}
+
+/* Today Column Highlighting */
+.is-today {
+    background-color: #f0f9ff !important;
+}
+
+/* Dark Mode Today Highlight */
+body.dark .is-today {
+    background-color: rgba(214, 140, 115, 0.15) !important;
+}
+
+/* Fix sticky headers transparency in Dark Mode */
+/* For sticky headers, we must use an opaque background + gradient overlay to imitate the rgba highlight without being see-through */
+body.dark .schedule-table thead th.is-today {
+    background-color: #2d2d2d !important;
+    background-image: linear-gradient(rgba(214, 140, 115, 0.15), rgba(214, 140, 115, 0.15)) !important;
+}
+
+/* Current User Row Sticky Column (Name) in Dark Mode */
+/* Also needs opaque background + gradient */
+body.dark .current-user-row .sticky-col {
+    background-color: #2d2d2d !important;
+    background-image: linear-gradient(rgba(214, 140, 115, 0.15), rgba(214, 140, 115, 0.15)) !important;
+}
+
+/* Light Mode Sticky Col Highlight (User Name) */
+.current-user-row .sticky-col {
+    background-color: #f0f9ff !important;
+}
+
+/* Intersection Logic */
+.current-user-row>td.is-today {
+    background-color: #f0f9ff !important;
+}
+
+body.dark .current-user-row>td.is-today {
+    background-color: rgba(214, 140, 115, 0.15) !important;
+}
+
+/* Schedule Select Fixes */
+.schedule-select-year {
+    width: 110px !important;
+    padding: 0.5rem !important;
+    height: auto !important;
+    /* Resets any fixed height */
+}
+
+.schedule-select-month {
+    width: 90px !important;
+    padding: 0.5rem !important;
+    height: auto !important;
+}
+
+/* Ensure no weird height on options */
+.schedule-select-year option,
+.schedule-select-month option {
+    line-height: normal;
+}
+
+/* Toast Notification */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast-message {
+    background-color: var(--white);
+    color: var(--text-main);
+    padding: 1rem 1.5rem;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    animation: slideInRight 0.3s ease forwards;
+    border-left: 4px solid var(--primary-color);
+    min-width: 250px;
+}
+
+.toast-message.success {
+    border-left-color: #2ecc71;
+}
+
+.toast-message.error {
+    border-left-color: #e74c3c;
+}
+
+.toast-message.info {
+    border-left-color: #3498db;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Alert variants */
+.alert.success {
+    border-left-color: #2ecc71;
+}
+
+.alert.error {
+    border-left-color: #e74c3c;
+}
+
+.alert.info {
+    border-left-color: #3498db;
+}
+
+/* 排班班次颜色 */
+.shift-rest-type {
+    color: #e74c3c !important;
+    font-weight: bold;
+}
+
+/* 休/假 - 红色 */
+.shift-duty-type {
+    color: #9b59b6 !important;
+    font-weight: bold;
+}
+
+/* 值班/夜班 - 紫色 */
+
+.shift-radiation {
+    color: #f39c12 !important;
+    font-weight: bold;
+}
+
+/* 放射 - 橙色 */
+.shift-other {
+    color: var(--text-main);
+}
+
+/* 其他 - 默认色 */

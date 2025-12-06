@@ -50,7 +50,7 @@
             </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="specialty-group">
             <label>专长</label>
             <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                 {% set specialties = ['妇科', '产科', '儿科', '筛查'] %}
@@ -65,7 +65,7 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" id="annual-leave-group">
             <label>年假设置</label>
             <div style="display: flex; gap: 1rem;">
                 <div style="flex: 1;">
@@ -90,9 +90,21 @@
         </div>
 
         <div class="form-group" id="resignation-group" style="display: none;">
-            <label for="resignation_date">离职月份</label>
-            <input type="month" id="resignation_date" name="resignation_date" class="form-control"
-                value="{{ doctor.resignation_date.strftime('%Y-%m') if doctor and doctor.status == 'resigned' and doctor.resignation_date else '' }}">
+            <label>离职月份</label>
+            <div style="display: flex; gap: 1rem;">
+                <select name="resignation_year" class="form-control">
+                    {% set r_year = doctor.resignation_date.year if doctor and doctor.resignation_date else 2025 %}
+                    {% for y in range(2025, 2036) %}
+                    <option value="{{ y }}" {% if y==r_year %}selected{% endif %}>{{ y }}年</option>
+                    {% endfor %}
+                </select>
+                <select name="resignation_month" class="form-control">
+                    {% set r_month = doctor.resignation_date.month if doctor and doctor.resignation_date else 1 %}
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m==r_month %}selected{% endif %}>{{ m }}月</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
 
         <div class="form-group">
@@ -239,6 +251,27 @@
     // 初始化运行一次
     toggleResignationDate();
 
+    // 职务联动专长和年假
+    const titleSelect = document.getElementById('title');
+    const specialtyGroup = document.getElementById('specialty-group');
+    const annualLeaveGroup = document.getElementById('annual-leave-group');
+
+    function toggleDoctorFields() {
+        const title = titleSelect.value;
+        // 只有选择"主任医师"或"医师"时才显示，默认(空)和"医助"都隐藏
+        if (title === '主任医师' || title === '医师') {
+            specialtyGroup.style.display = 'block';
+            annualLeaveGroup.style.display = 'block';
+        } else {
+            specialtyGroup.style.display = 'none';
+            annualLeaveGroup.style.display = 'none';
+        }
+    }
+
+    titleSelect.addEventListener('change', toggleDoctorFields);
+    // 初始化
+    toggleDoctorFields();
+
     // 年假验证
     const annualTotalInput = document.getElementById('annual_leave_days');
     const annualUsedInput = document.getElementById('used_annual_leave_days');
@@ -247,7 +280,7 @@
         const total = parseInt(annualTotalInput.value) || 0;
         const used = parseInt(annualUsedInput.value) || 0;
         if (used > total) {
-            alert('错误：已休年假天数不能大于每年总年假天数');
+            showFlashMessage('错误：已休年假天数不能大于每年总年假天数', 'error');
             annualUsedInput.value = total; // 自动修正为最大值
         }
     }

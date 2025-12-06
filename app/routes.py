@@ -2,14 +2,18 @@ import os
 import time
 import re
 from datetime import datetime, date, timedelta
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, send_file
+from io import BytesIO
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.utils import secure_filename
 from app import db
 from app.models.users import User
 from app.models.doctors import Doctor
 from app.models.holidays import Holiday
+from app.models.schedules import Schedule
 from app.models.settings import SystemSetting
+import calendar
+import openpyxl
 
 def register_routes(app):
     
@@ -85,7 +89,303 @@ def register_routes(app):
     @app.route('/schedule')
     @login_required
     def schedule():
-        return render_template('schedule.html', title='排班表')
+        year = request.args.get('year', datetime.now().year, type=int)
+        month = request.args.get('month', datetime.now().month, type=int)
+        
+        # 获取当月有多少天
+        _, num_days = calendar.monthrange(year, month)
+        
+        # 构造日期列表和星期列表
+        dates = []
+        for day in range(1, num_days + 1):
+            date_obj = date(year, month, day)
+            dates.append({
+                'date': date_obj,
+                'day': day,
+                'weekday': date_obj.weekday(), # 0=Mon, 6=Sun
+                'is_weekend': date_obj.weekday() >= 5,
+                'is_today': date_obj == date.today()
+            })
+            
+        # 获取节假日信息
+        holidays = Holiday.query.filter(
+            db.extract('year', Holiday.date) == year,
+            db.extract('month', Holiday.date) == month
+        ).all()
+        
+        holiday_map = {h.date: h for h in holidays}
+        
+        # 标记日期属性 (节假日/补班)
+        for d in dates:
+            h = holiday_map.get(d['date'])
+            if h:
+                d['holiday'] = h
+                d['is_workday'] = (h.type == 'workday')
+                d['is_holiday'] = (h.type == 'holiday')
+            else:
+                d['is_workday'] = not d['is_weekend']
+                d['is_holiday'] = d['is_weekend']
+
+        # 获取排班数据
+        schedules = Schedule.query.filter(
+            db.extract('year', Schedule.date) == year,
+            db.extract('month', Schedule.date) == month
+        ).all()
+        
+        schedule_map = {} # (doctor_id, day) -> shift_type
+        for s in schedules:
+            schedule_map[(s.doctor_id, s.date.day)] = s.shift_type
+            
+        # 获取医生并分组
+        all_doctors = Doctor.query.order_by(Doctor.display_order.asc()).all()
+        doctors_group = []
+        assistants_group = []
+        
+        for doc in all_doctors:
+            # 过滤逻辑：如果医生已离职，且浏览月份晚于离职月份，则不显示
+            if doc.status == 'resigned' and doc.resignation_date:
+                # 构造浏览月份的第一天
+                view_date = date(year, month, 1)
+                # 构造离职月份的第一天 (忽略具体的日，只要月份对齐)
+                resign_month_date = date(doc.resignation_date.year, doc.resignation_date.month, 1)
+                
+                if view_date > resign_month_date:
+                    continue
+
+            # 简单的分组逻辑：职位含"医助"分为一组，其他为医生组
+            # 或者根据 display_order? 这里暂时用 Title
+            if doc.title and '医助' in doc.title:
+                assistants_group.append(doc)
+            else:
+                doctors_group.append(doc)
+                
+        return render_template('schedule.html', 
+                             title='排班表',
+                             year=year,
+                             month=month,
+                             dates=dates,
+                             doctors_group=doctors_group,
+                             assistants_group=assistants_group,
+                             schedule_map=schedule_map)
+
+    @app.route('/schedule/upload', methods=['POST'])
+    @login_required
+    def upload_schedule():
+        if current_user.role not in ['admin', 'super_admin']:
+             return jsonify({'success': False, 'message': '权限不足'})
+
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': '未上传文件'})
+            
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': '未选择文件'})
+            
+        if file.filename.endswith('.xls'):
+            return jsonify({'success': False, 'message': '不支持旧版 Excel (.xls) 格式，请另存为 .xlsx 格式后上传。'})
+
+        if not file.filename.endswith('.xlsx'):
+            return jsonify({'success': False, 'message': '仅支持 Excel 2007+ (.xlsx) 文件'})
+            
+        temp_path = None
+        try:
+            # 1. 保存到临时文件
+            filename = secure_filename(file.filename)
+            temp_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'temp')
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dir)
+            temp_path = os.path.join(temp_dir, f"{int(time.time())}_{filename}")
+            file.save(temp_path)
+
+            # 2. 读取文件 (data_only=True 读取值而非公式)
+            try:
+                wb = openpyxl.load_workbook(temp_path, data_only=True)
+            except Exception as load_err:
+                 return jsonify({'success': False, 'message': f'文件读取失败: 可能是文件加密或损坏 ({str(load_err)})'})
+
+            sheet = wb.active
+            
+            # 3. 获取前端传递的参数
+            year = request.form.get('year', datetime.now().year, type=int)
+            month = request.form.get('month', datetime.now().month, type=int)
+            
+            # 读取所有医生做映射 Name -> ID
+            doctors = Doctor.query.all()
+            doctor_map = {d.name: d.id for d in doctors}
+            
+            updated_count = 0
+            
+            # 遍历行
+            for row in sheet.iter_rows(min_row=2, values_only=True): 
+                # row[0] 是姓名 (假设格式)
+                if not row or len(row) < 2:
+                    continue
+
+                name = row[0]
+                if not name or name not in doctor_map:
+                    continue
+                    
+                doctor_id = doctor_map[name]
+                
+                # 假设第一行是日期，列索引1对应1号 (Excel中第2列)
+                # row[1] -> 1号, row[2] -> 2号 ...
+                
+                for day_idx in range(1, len(row)):
+                    day = day_idx 
+                    try:
+                        # 检查日期有效性
+                        current_date = date(year, month, day)
+                    except ValueError:
+                        break # 超出当月天数
+                        
+                    shift_type = row[day_idx]
+                    if shift_type:
+                        shift_type = str(shift_type).strip()
+                    
+                    # 查找现有记录
+                    schedule = Schedule.query.filter_by(doctor_id=doctor_id, date=current_date).first()
+                    
+                    if shift_type:
+                        if schedule:
+                            schedule.shift_type = shift_type
+                        else:
+                            schedule = Schedule(doctor_id=doctor_id, date=current_date, shift_type=shift_type)
+                            db.session.add(schedule)
+                        updated_count += 1
+                    elif schedule:
+                         # 如果 Excel 为空但数据库有值，暂不处理（或根据需求清空）
+                         pass
+            
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'导入成功，更新了 {updated_count} 条排班信息'})
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'message': f'系统错误: {str(e)}'})
+        finally:
+            # 清理临时文件
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+
+    @app.route('/schedule/doctor/<int:doctor_id>')
+    @login_required
+    def doctor_schedule_calendar(doctor_id):
+        year = request.args.get('year', datetime.now().year, type=int)
+        month = request.args.get('month', datetime.now().month, type=int)
+        
+        doctor = db.session.get(Doctor, doctor_id)
+        if not doctor:
+            flash('医生不存在')
+            return redirect(url_for('schedule'))
+            
+        _, num_days = calendar.monthrange(year, month)
+        
+        # Get Holidays
+        holidays = Holiday.query.filter(
+            db.extract('year', Holiday.date) == year,
+            db.extract('month', Holiday.date) == month
+        ).all()
+        holiday_map = {h.date.day: h for h in holidays}
+        
+        # Get Schedules
+        schedules = Schedule.query.filter(
+            Schedule.doctor_id == doctor_id,
+            db.extract('year', Schedule.date) == year,
+            db.extract('month', Schedule.date) == month
+        ).all()
+        schedule_map = {s.date.day: s.shift_type for s in schedules}
+        
+        # Build Calendar Data
+        calendar_data = []
+        start_day_weekday = date(year, month, 1).weekday() # 0=Mon, 6=Sun
+        
+        # Empty cells for start of month
+        for _ in range(start_day_weekday):
+            calendar_data.append(None)
+            
+        for day in range(1, num_days + 1):
+            current_date = date(year, month, day)
+            is_weekend = current_date.weekday() >= 5
+            
+            status = 'weekend' if is_weekend else 'workday'
+            holiday_name = None
+            
+            if day in holiday_map:
+                h = holiday_map[day]
+                if h.type == 'holiday':
+                    status = 'holiday'
+                    holiday_name = h.name
+                elif h.type == 'workday':
+                    status = 'workday'
+                    holiday_name = h.name
+            
+            calendar_data.append({
+                'day': day,
+                'status': status,
+                'holiday_name': holiday_name,
+                'shift_type': schedule_map.get(day)
+            })
+            
+        # Fill end of week
+        while len(calendar_data) % 7 != 0:
+            calendar_data.append(None)
+            
+        return render_template('doctor_schedule_calendar.html',
+                             doctor=doctor,
+                             current_year=year,
+                             current_month=month,
+                             calendar_data=calendar_data)
+
+    @app.route('/schedule/template')
+    @login_required
+    def download_schedule_template():
+        if current_user.role not in ['admin', 'super_admin']:
+             flash('权限不足')
+             return redirect(url_for('schedule'))
+        
+        # Get year/month from query params, default to current
+        try:
+            year = int(request.args.get('year', datetime.now().year))
+            month = int(request.args.get('month', datetime.now().month))
+        except ValueError:
+            year = datetime.now().year
+            month = datetime.now().month
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"{year}年{month}月排班模版"
+        
+        # 1. Calculate number of days
+        _, num_days = calendar.monthrange(year, month)
+
+        # 2. Key Headers
+        headers = ['姓名'] + [str(i) for i in range(1, num_days + 1)]
+        ws.append(headers)
+        
+        # 3. Pre-fill Doctor Names
+        doctors = Doctor.query.order_by(Doctor.display_order.asc()).all()
+        for doc in doctors:
+            if doc.status == 'active':
+                # Create row with Name + empty cells for each day
+                row = [doc.name] + [''] * num_days
+                ws.append(row)
+                
+        # 4. Save to BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f'schedule_template_{year}_{month:02d}.xlsx'
+
+        return send_file(
+            output, 
+            as_attachment=True, 
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
 
     @app.route('/doctors')
     @login_required
@@ -125,9 +425,9 @@ def register_routes(app):
             role = request.form.get('role')
             password = request.form.get('password')
             
-            # 权限检查：普通管理员只能创建普通用户
-            if current_user.role == 'admin' and role != 'user':
-                flash('管理员只能创建普通用户')
+            # 权限检查：普通管理员只能创建普通用户或普通医助
+            if current_user.role == 'admin' and role not in ['user', 'assistant']:
+                flash('管理员只能创建普通医师或普通医助')
                 doctors = Doctor.query.order_by(Doctor.display_order.asc()).all()
                 return render_template('user_form.html', title='添加用户', doctors=doctors)
 
@@ -166,8 +466,8 @@ def register_routes(app):
             return redirect(url_for('users_list'))
             
         # 权限检查：管理员只能编辑普通用户
-        # 权限检查：管理员只能编辑普通用户，或者自己
-        if current_user.role == 'admin' and user.role != 'user' and user.id != current_user.id:
+        # 权限检查：管理员只能编辑普通用户或普通医助，或者自己
+        if current_user.role == 'admin' and user.role not in ['user', 'assistant'] and user.id != current_user.id:
             flash('您没有权限编辑此账户')
             return redirect(url_for('users_list'))
 
@@ -219,7 +519,7 @@ def register_routes(app):
         user = db.session.get(User, id)
         if user:
             # 权限检查
-            if current_user.role == 'admin' and user.role != 'user':
+            if current_user.role == 'admin' and user.role not in ['user', 'assistant']:
                 flash('权限不足')
                 return redirect(url_for('users_list'))
 
@@ -297,14 +597,12 @@ def register_routes(app):
             )
             
             if status == 'resigned':
-                resignation_date_str = request.form.get('resignation_date')
-                if resignation_date_str:
-
-                    try:
-                        # input type="month" 返回 YYYY-MM，需要补全为 YYYY-MM-01
-                        doctor.resignation_date = datetime.strptime(resignation_date_str + '-01', '%Y-%m-%d').date()
-                    except ValueError:
-                        pass # 保持默认或处理错误
+                try:
+                    r_year = int(request.form.get('resignation_year'))
+                    r_month = int(request.form.get('resignation_month'))
+                    doctor.resignation_date = date(r_year, r_month, 1)
+                except (ValueError, TypeError):
+                    pass
             
             db.session.add(doctor)
             db.session.commit()
@@ -372,14 +670,12 @@ def register_routes(app):
                     doctor.avatar_path = f"uploads/avatars/{filename}"
 
             if doctor.status == 'resigned':
-                resignation_date_str = request.form.get('resignation_date')
-                if resignation_date_str:
-
-                    try:
-                        # input type="month" 返回 YYYY-MM，需要补全为 YYYY-MM-01
-                        doctor.resignation_date = datetime.strptime(resignation_date_str + '-01', '%Y-%m-%d').date()
-                    except ValueError:
-                        pass
+                try:
+                    r_year = int(request.form.get('resignation_year'))
+                    r_month = int(request.form.get('resignation_month'))
+                    doctor.resignation_date = date(r_year, r_month, 1)
+                except (ValueError, TypeError):
+                    pass
             else:
                  # 如果改回在职，重置离职时间为默认
 

@@ -26,14 +26,21 @@
         <div class="form-group">
             <label for="role">角色</label>
             <select id="role" name="role" class="form-control">
-                <option value="user" {% if not user or user.role=='user' %}selected{% endif %}>普通用户</option>
+                <option value="assistant" {% if not user or user.role=='assistant' %}selected{% endif %}>普通医助</option>
+                <option value="user" {% if user and user.role=='user' %}selected{% endif %}>普通医师</option>
                 <option value="admin" {% if user and user.role=='admin' %}selected{% endif %}>管理员</option>
                 <option value="super_admin" {% if user and user.role=='super_admin' %}selected{% endif %}>超级管理员</option>
             </select>
         </div>
         {% else %}
-        <!-- 普通管理员只能创建/编辑普通用户，隐藏角色选择 -->
-        <input type="hidden" name="role" value="user">
+        <!-- 普通管理员只能创建/编辑医师或医助 -->
+        <div class="form-group">
+            <label for="role">角色</label>
+            <select id="role" name="role" class="form-control">
+                <option value="assistant" {% if not user or user.role=='assistant' %}selected{% endif %}>普通医助</option>
+                <option value="user" {% if user and user.role=='user' %}selected{% endif %}>普通医师</option>
+            </select>
+        </div>
         {% endif %}
 
         {% if current_user.role in ['admin', 'super_admin'] %}

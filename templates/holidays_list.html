@@ -253,24 +253,25 @@
             method: 'POST',
             body: formData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
             }
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    location.reload();
+                    showFlashMessage(data.message, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 } else {
-                    alert('导入失败：' + data.message);
+                    showFlashMessage(data.message, 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('请求出错，请稍后重试');
+                showFlashMessage('系统错误', 'error');
             })
             .finally(() => {
-                btn.innerText = originalText;
+                btn.textContent = originalText;
                 btn.disabled = false;
             });
     }

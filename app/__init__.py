@@ -16,7 +16,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
 
     # 注册 Blueprint 或导入模型
-    from app.models import users, doctors, holidays
+    from app.models import users, doctors, holidays, schedules
     
     from app.routes import register_routes
     register_routes(app)
