@@ -12,8 +12,8 @@
         </button>
         <div class="action-bar" id="userActions">
             <div class="action-content-wrapper">
-                <input type="text" id="searchInput" class="form-control" placeholder="搜索用户名或姓名..."
-                    style="width: 200px; display: inline-block;" onkeyup="filterTable()">
+                <input type="text" id="searchInput" class="form-control form-search-input" placeholder="搜索用户名或姓名..."
+                    onkeyup="filterTable()">
 
                 {% if current_user.role in ['admin', 'super_admin'] %}
                 <a href="{{ url_for('add_user') }}" class="btn-primary">＋ 添加用户</a>

@@ -36,6 +36,10 @@ def register_workload_routes(app):
     @app.route('/workload')
     @login_required
     def workload_stats():
+        if current_user.role not in ['doctor', 'admin', 'super_admin']:
+            flash('无权访问工作量统计页面')
+            return redirect(url_for('index'))
+            
         import calendar
         year, month = get_date_params()
         month_str = f"{year}-{month:02d}"

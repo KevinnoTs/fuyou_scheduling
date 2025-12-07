@@ -141,7 +141,7 @@ body {
     align-items: center;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1000;
     transition: background-color 0.3s ease;
 }
 
@@ -779,6 +779,12 @@ body.dark select.form-control option {
     height: 100%;
 }
 
+/* Fix for Action Bar Z-Index Stacking */
+.full-screen-card>div:first-child {
+    position: relative;
+    z-index: 500;
+}
+
 .fixed-wrapper .full-screen-card {
     height: 100%;
 }
@@ -933,6 +939,12 @@ body.dark .alert {
     gap: 1rem;
 }
 
+
+/* Holiday Button Subgroup - Desktop Default */
+.holiday-btn-subgroup {
+    display: contents;
+}
+
 /* Responsive Action Bar (Combined Logic for < 1200px) */
 @media (max-width: 1200px) {
     .action-toggle-btn {
@@ -949,13 +961,13 @@ body.dark .alert {
         padding: 1rem;
         border-radius: 12px;
         box-shadow: var(--shadow-md);
-        z-index: 100;
+        z-index: 900;
         flex-direction: column;
         gap: 0.8rem;
         width: auto;
         min-width: 200px;
         border: 1px solid rgba(0, 0, 0, 0.05);
-        align-items: center;
+        align-items: flex-end;
     }
 
     .action-content-wrapper {
@@ -1023,8 +1035,15 @@ body.dark .alert {
         display: inline-block;
     }
 
-    .action-content-wrapper .form-control {
-        width: 100% !important;
+    .action-bar .holiday-btn-subgroup {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .action-content-wrapper input.form-control {
+        width: 200px !important;
     }
 
     .action-bar form {
@@ -1758,18 +1777,201 @@ body.dark .sticky-col {
 }
 
 /* FINAL AUTHORITY: King Rules at the very end */
-.schedule-table thead tr:first-child th.sticky-col {
-    z-index: 100 !important;
+
+
+/* Column Highlight (Today) */
+.is-today {
+    background-color: transparent !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
 }
 
-.schedule-table thead tr:nth-child(2) th.sticky-col {
-    z-index: 90 !important;
-}
-
-/* Hover on Selected Row (Deepen) */
-.current-user-row:hover td {
+/* Intersection Highlighting (Row + Col) */
+.current-user-row .is-today {
     background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
 }
+
+/* Header Highlight (Preserve Opacity) */
+.schedule-table thead th.is-today {
+    background-color: var(--secondary-color) !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.1), rgba(var(--highlight-rgb), 0.1)) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05) !important;
+    /* Maintain border definition */
+}
+
+/* FIX: Sticky Column Highlighting (Opaque Base + Gradient Tint) */
+
+/* 1. Generic Hover */
+tbody tr:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.08), rgba(var(--highlight-rgb), 0.08)) !important;
+    /* Tint: Match standard hover */
+}
+
+/* 2. Selected Row */
+.current-user-row .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+    /* Tint: Match standard selection */
+}
+
+/* 3. Selected Row + Hover */
+.current-user-row:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+    /* Tint: Match standard darken */
+}
+
+
+/* Dark Mode Overrides for Sticky Hover - REPLACED BY AUTHORITY BLOCK */
+
+/* FINAL AUTHORITY: Dark Mode Highlights (Moved here to override generic resets) */
+/* Boosted Specificity with .schedule-table */
+
+/* 1. Selected Row (Body Cells) - Unified for Schedule AND Generic Tables */
+body.dark .schedule-table tbody tr.current-user-row>td,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 2. Selected Row + Hover */
+body.dark .schedule-table tbody tr.current-user-row:hover>td,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row:hover>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+}
+
+/* 3. Column (Body) Highlight */
+body.dark .schedule-table tbody tr td.is-today,
+body.dark .table-container tbody tr td.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 4. Header Highlight (Today) */
+body.dark .schedule-table thead th.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 5. Sticky Header Tint (Fix for Cols 1 & 2) */
+body.dark .schedule-table thead th.sticky-col {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 6. Intersection (Row + Col) */
+body.dark .schedule-table tbody tr.current-user-row .is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 7. Ensure Sticky Column (General) respects Dark Mode overrides */
+body.dark .sticky-col {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+    /* Ensure base is dark, but tinted via rules above if selected */
+    right: 8rem !important;
+    /* Width of actions */
+    z-index: 30 !important;
+    width: 5rem !important;
+    background-color: var(--white);
+    border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.dark .sticky-col-right-actions,
+body.dark .sticky-col-right-total {
+    background-color: #2d2d2d;
+    border-left-color: #444;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Right Sticky Highlights */
+/* 1. Generic Hover */
+tbody tr:not(.spacer-row):hover .sticky-col-right-actions,
+tbody tr:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-hover) !important;
+}
+
+/* 2. Selected Row */
+tr.current-user-row:not(.spacer-row) .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row) .sticky-col-right-total {
+    background-color: var(--bg-selected) !important;
+}
+
+/* 3. Selected + Hover */
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-selected-deep) !important;
+}
+
+/* Spacer Safety */
+tr.spacer-row:hover .sticky-col-right-actions,
+tr.spacer-row:hover .sticky-col-right-total {
+    background-color: transparent !important;
+}
+
+
+/* Global Z-Index Hierarchy Check */
+/*
+Tier 1: Row 1 Corner (z-60)
+Tier 2: Row 1 Generic, Row 2 Corner (z-50)
+Tier 3: Row 2 Generic (z-40)
+Tier 4: Body Sticky (z-30)
+*/
+
+/* Generic Sticky Column (Robust Fix) */
+.sticky-col {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 30 !important;
+    /* Base for body */
+    background-color: var(--white);
+    /* Default Base */
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box !important;
+    background-clip: border-box !important;
+    width: 6rem !important;
+    min-width: 6rem !important;
+    max-width: 6rem !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+body.dark .sticky-col {
+    background-color: #2d2d2d;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+}
+
+
+/* CRITICAL FIX: Enforce Sticky & Clear Contexts */
+
+/* Clear stacking contexts on all table elements */
+.schedule-table,
+.schedule-table thead,
+.schedule-table tbody,
+.schedule-table tr,
+.schedule-table th,
+.schedule-table td {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    perspective: none !important;
+}
+
+/* FINAL AUTHORITY: King Rules at the very end */
 
 
 /* Column Highlight (Today) */
@@ -1881,4 +2083,619 @@ body.dark .sticky-col {
 /* Global Z-Index Hierarchy Check (Restored) */
 .sticky-col {
     z-index: 30 !important;
+}
+
+/* Schedule Page Exact Dropdown Sizing */
+.schedule-select-year {
+    width: 5rem !important;
+    height: 2rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.9rem;
+}
+
+/* Right Sticky Highlights */
+/* 1. Generic Hover */
+tbody tr:not(.spacer-row):hover .sticky-col-right-actions,
+tbody tr:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-hover) !important;
+}
+
+/* 2. Selected Row */
+tr.current-user-row:not(.spacer-row) .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row) .sticky-col-right-total {
+    background-color: var(--bg-selected) !important;
+}
+
+/* 3. Selected + Hover */
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-selected-deep) !important;
+}
+
+/* Spacer Safety */
+tr.spacer-row:hover .sticky-col-right-actions,
+tr.spacer-row:hover .sticky-col-right-total {
+    background-color: transparent !important;
+}
+
+
+/* Global Z-Index Hierarchy Check */
+/*
+Tier 1: Row 1 Corner (z-60)
+Tier 2: Row 1 Generic, Row 2 Corner (z-50)
+Tier 3: Row 2 Generic (z-40)
+Tier 4: Body Sticky (z-30)
+*/
+
+/* Generic Sticky Column (Robust Fix) */
+.sticky-col {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 30 !important;
+    /* Base for body */
+    background-color: var(--white);
+    /* Default Base */
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box !important;
+    background-clip: border-box !important;
+    width: 6rem !important;
+    min-width: 6rem !important;
+    max-width: 6rem !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+body.dark .sticky-col {
+    background-color: #2d2d2d;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+}
+
+
+/* CRITICAL FIX: Enforce Sticky & Clear Contexts */
+
+/* Clear stacking contexts on all table elements */
+.schedule-table,
+.schedule-table thead,
+.schedule-table tbody,
+.schedule-table tr,
+.schedule-table th,
+.schedule-table td {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    perspective: none !important;
+}
+
+/* FINAL AUTHORITY: King Rules at the very end */
+
+
+/* Column Highlight (Today) */
+.is-today {
+    background-color: transparent !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+}
+
+/* Intersection Highlighting (Row + Col) */
+.current-user-row .is-today {
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+}
+
+/* Header Highlight (Preserve Opacity) */
+.schedule-table thead th.is-today {
+    background-color: var(--secondary-color) !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.1), rgba(var(--highlight-rgb), 0.1)) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05) !important;
+    /* Maintain border definition */
+}
+
+/* FIX: Sticky Column Highlighting (Opaque Base + Gradient Tint) */
+
+/* 1. Generic Hover */
+tbody tr:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.08), rgba(var(--highlight-rgb), 0.08)) !important;
+    /* Tint: Match standard hover */
+}
+
+/* 2. Selected Row */
+.current-user-row .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+    /* Tint: Match standard selection */
+}
+
+/* 3. Selected Row + Hover */
+.current-user-row:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+    /* Tint: Match standard darken */
+}
+
+
+/* Dark Mode Overrides for Sticky Hover - REPLACED BY AUTHORITY BLOCK */
+
+/* FINAL AUTHORITY: Dark Mode Highlights (Moved here to override generic resets) */
+/* Boosted Specificity with .schedule-table */
+
+/* 1. Selected Row (Body Cells) - Unified for Schedule AND Generic Tables */
+body.dark .schedule-table tbody tr.current-user-row>td,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 2. Selected Row + Hover */
+body.dark .schedule-table tbody tr.current-user-row:hover>td,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row:hover>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+}
+
+/* 3. Column (Body) Highlight */
+body.dark .schedule-table tbody tr td.is-today,
+body.dark .table-container tbody tr td.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 4. Header Highlight (Today) */
+body.dark .schedule-table thead th.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 5. Sticky Header Tint (Fix for Cols 1 & 2) */
+body.dark .schedule-table thead th.sticky-col {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 6. Intersection (Row + Col) */
+body.dark .schedule-table tbody tr.current-user-row .is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 7. Ensure Sticky Column (General) respects Dark Mode overrides */
+body.dark .sticky-col {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+    /* Ensure base is dark, but tinted via rules above if selected */
+}
+
+/* Global Z-Index Hierarchy Check (Restored) */
+.sticky-col {
+    z-index: 30 !important;
+}
+
+/* Schedule Page Exact Dropdown Sizing */
+.schedule-select-year {
+    width: 5rem !important;
+    height: 2rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.9rem;
+}
+
+/* Right Sticky Highlights */
+/* 1. Generic Hover */
+tbody tr:not(.spacer-row):hover .sticky-col-right-actions,
+tbody tr:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-hover) !important;
+}
+
+/* 2. Selected Row */
+tr.current-user-row:not(.spacer-row) .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row) .sticky-col-right-total {
+    background-color: var(--bg-selected) !important;
+}
+
+/* 3. Selected + Hover */
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-selected-deep) !important;
+}
+
+/* Spacer Safety */
+tr.spacer-row:hover .sticky-col-right-actions,
+tr.spacer-row:hover .sticky-col-right-total {
+    background-color: transparent !important;
+}
+
+
+/* Global Z-Index Hierarchy Check */
+/*
+Tier 1: Row 1 Corner (z-60)
+Tier 2: Row 1 Generic, Row 2 Corner (z-50)
+Tier 3: Row 2 Generic (z-40)
+Tier 4: Body Sticky (z-30)
+*/
+
+/* Generic Sticky Column (Robust Fix) */
+.sticky-col {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 30 !important;
+    /* Base for body */
+    background-color: var(--white);
+    /* Default Base */
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box !important;
+    background-clip: border-box !important;
+    width: 6rem !important;
+    min-width: 6rem !important;
+    max-width: 6rem !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+body.dark .sticky-col {
+    background-color: #2d2d2d;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+}
+
+
+/* CRITICAL FIX: Enforce Sticky & Clear Contexts */
+
+/* Clear stacking contexts on all table elements */
+.schedule-table,
+.schedule-table thead,
+.schedule-table tbody,
+.schedule-table tr,
+.schedule-table th,
+.schedule-table td {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    perspective: none !important;
+}
+
+/* FINAL AUTHORITY: King Rules at the very end */
+
+
+/* Column Highlight (Today) */
+.is-today {
+    background-color: transparent !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+}
+
+/* Intersection Highlighting (Row + Col) */
+.current-user-row .is-today {
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+}
+
+/* Header Highlight (Preserve Opacity) */
+.schedule-table thead th.is-today {
+    background-color: var(--secondary-color) !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.1), rgba(var(--highlight-rgb), 0.1)) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05) !important;
+    /* Maintain border definition */
+}
+
+/* FIX: Sticky Column Highlighting (Opaque Base + Gradient Tint) */
+
+/* 1. Generic Hover */
+tbody tr:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.08), rgba(var(--highlight-rgb), 0.08)) !important;
+    /* Tint: Match standard hover */
+}
+
+/* 2. Selected Row */
+.current-user-row .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+    /* Tint: Match standard selection */
+}
+
+/* 3. Selected Row + Hover */
+.current-user-row:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+    /* Tint: Match standard darken */
+}
+
+
+/* Dark Mode Overrides for Sticky Hover - REPLACED BY AUTHORITY BLOCK */
+
+/* FINAL AUTHORITY: Dark Mode Highlights (Moved here to override generic resets) */
+/* Boosted Specificity with .schedule-table */
+
+/* 1. Selected Row (Body Cells) - Unified for Schedule AND Generic Tables */
+body.dark .schedule-table tbody tr.current-user-row>td,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 2. Selected Row + Hover */
+body.dark .schedule-table tbody tr.current-user-row:hover>td,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row:hover>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+}
+
+/* 3. Column (Body) Highlight */
+body.dark .schedule-table tbody tr td.is-today,
+body.dark .table-container tbody tr td.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 4. Header Highlight (Today) */
+body.dark .schedule-table thead th.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 5. Sticky Header Tint (Fix for Cols 1 & 2) */
+body.dark .schedule-table thead th.sticky-col {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 6. Intersection (Row + Col) */
+body.dark .schedule-table tbody tr.current-user-row .is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 7. Ensure Sticky Column (General) respects Dark Mode overrides */
+body.dark .sticky-col {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+    /* Ensure base is dark, but tinted via rules above if selected */
+}
+
+/* Global Z-Index Hierarchy Check (Restored) */
+.sticky-col {
+    z-index: 30 !important;
+}
+
+/* Schedule Page Exact Dropdown Sizing */
+/* Global Exact Dropdown Sizing (Schedule, Workload, Holidays) */
+.form-select-year {
+    width: 6rem !important;
+    /* Slightly wider safe defaults */
+    height: 2.8rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 1rem !important;
+    line-height: normal;
+    display: inline-block;
+}
+
+.form-select-month {
+    width: 5rem !important;
+    height: 2.8rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 1rem !important;
+    line-height: normal;
+    display: inline-block;
+}
+
+/* Right Sticky Highlights */
+/* 1. Generic Hover */
+tbody tr:not(.spacer-row):hover .sticky-col-right-actions,
+tbody tr:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-hover) !important;
+}
+
+/* 2. Selected Row */
+tr.current-user-row:not(.spacer-row) .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row) .sticky-col-right-total {
+    background-color: var(--bg-selected) !important;
+}
+
+/* 3. Selected + Hover */
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-actions,
+tr.current-user-row:not(.spacer-row):hover .sticky-col-right-total {
+    background-color: var(--bg-selected-deep) !important;
+}
+
+/* Spacer Safety */
+tr.spacer-row:hover .sticky-col-right-actions,
+tr.spacer-row:hover .sticky-col-right-total {
+    background-color: transparent !important;
+}
+
+
+/* Global Z-Index Hierarchy Check */
+/*
+Tier 1: Row 1 Corner (z-60)
+Tier 2: Row 1 Generic, Row 2 Corner (z-50)
+Tier 3: Row 2 Generic (z-40)
+Tier 4: Body Sticky (z-30)
+*/
+
+/* Generic Sticky Column (Robust Fix) */
+.sticky-col {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 30 !important;
+    /* Base for body */
+    background-color: var(--white);
+    /* Default Base */
+    box-shadow: 4px 0 6px -2px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box !important;
+    background-clip: border-box !important;
+    width: 6rem !important;
+    min-width: 6rem !important;
+    max-width: 6rem !important;
+    padding: 0.75rem 0.5rem !important;
+}
+
+body.dark .sticky-col {
+    background-color: #2d2d2d;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+}
+
+
+/* CRITICAL FIX: Enforce Sticky & Clear Contexts */
+
+/* Clear stacking contexts on all table elements */
+.schedule-table,
+.schedule-table thead,
+.schedule-table tbody,
+.schedule-table tr,
+.schedule-table th,
+.schedule-table td {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    perspective: none !important;
+}
+
+/* FINAL AUTHORITY: King Rules at the very end */
+
+
+/* Column Highlight (Today) */
+.is-today {
+    background-color: transparent !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+}
+
+/* Intersection Highlighting (Row + Col) */
+.current-user-row .is-today {
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+}
+
+/* Header Highlight (Preserve Opacity) */
+.schedule-table thead th.is-today {
+    background-color: var(--secondary-color) !important;
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.1), rgba(var(--highlight-rgb), 0.1)) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05) !important;
+    /* Maintain border definition */
+}
+
+/* FIX: Sticky Column Highlighting (Opaque Base + Gradient Tint) */
+
+/* 1. Generic Hover */
+tbody tr:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.08), rgba(var(--highlight-rgb), 0.08)) !important;
+    /* Tint: Match standard hover */
+}
+
+/* 2. Selected Row */
+.current-user-row .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.12), rgba(var(--highlight-rgb), 0.12)) !important;
+    /* Tint: Match standard selection */
+}
+
+/* 3. Selected Row + Hover */
+.current-user-row:hover .sticky-col {
+    background-color: var(--white) !important;
+    /* Base: Opaque */
+    background-image: linear-gradient(rgba(var(--highlight-rgb), 0.25), rgba(var(--highlight-rgb), 0.25)) !important;
+    /* Tint: Match standard darken */
+}
+
+
+/* Dark Mode Overrides for Sticky Hover - REPLACED BY AUTHORITY BLOCK */
+
+/* FINAL AUTHORITY: Dark Mode Highlights (Moved here to override generic resets) */
+/* Boosted Specificity with .schedule-table */
+
+/* 1. Selected Row (Body Cells) - Unified for Schedule AND Generic Tables */
+body.dark .schedule-table tbody tr.current-user-row>td,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 2. Selected Row + Hover */
+body.dark .schedule-table tbody tr.current-user-row:hover>td,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-actions,
+body.dark .schedule-table tbody tr.current-user-row:hover .sticky-col-right-total,
+body.dark .table-container tbody tr.current-user-row:hover>td {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+}
+
+/* 3. Column (Body) Highlight */
+body.dark .schedule-table tbody tr td.is-today,
+body.dark .table-container tbody tr td.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+/* 4. Header Highlight (Today) */
+body.dark .schedule-table thead th.is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 5. Sticky Header Tint (Fix for Cols 1 & 2) */
+body.dark .schedule-table thead th.sticky-col {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 6. Intersection (Row + Col) */
+body.dark .schedule-table tbody tr.current-user-row .is-today {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.25)) !important;
+    color: var(--primary-color) !important;
+}
+
+/* 7. Ensure Sticky Column (General) respects Dark Mode overrides */
+body.dark .sticky-col {
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3) !important;
+    border-right: 1px solid #444 !important;
+    /* Ensure base is dark, but tinted via rules above if selected */
+}
+
+/* FORCE MOBILE OVERRIDE (v4.39 fix) */
+@media (max-width: 1200px) {
+    .action-bar form .form-select-year { width: 6rem !important; }
+    .action-bar form .form-select-month { width: 5rem !important; }
+}
+
+
+/* Global Search Input Sizing (Doctors, Users) */
+.form-search-input {
+    width: 14rem !important;
+    height: 2.8rem !important;
+    padding: 0 0.8rem !important;
+    font-size: 1rem !important;
+    line-height: normal;
+    display: inline-block;
+}
+
+/* FORCE MOBILE OVERRIDE for Search */
+@media (max-width: 1200px) {
+    .action-bar .form-search-input { width: 14rem !important; }
 }

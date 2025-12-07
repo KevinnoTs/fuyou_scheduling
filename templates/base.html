@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>妇幼影像科排班统计系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.40">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
     <style>
@@ -147,8 +147,10 @@
         <div class="navbar-nav" id="navbarNav">
             {% if current_user.is_authenticated %}
             <a href="{{ url_for('schedule') }}" class="nav-btn"><span class="nav-icon">📅</span> <span>排班表</span></a>
+            {% if current_user.role in ['doctor', 'admin', 'super_admin'] %}
             <a href="{{ url_for('workload_stats') }}" class="nav-btn"><span class="nav-icon">📊</span>
                 <span>工作量统计</span></a>
+            {% endif %}
             <a href="{{ url_for('doctors_list') }}" class="nav-btn"><span class="nav-icon">👨‍⚕️</span>
                 <span>医生列表</span></a>
             {% if current_user.role in ['admin', 'super_admin'] %}
@@ -582,6 +584,26 @@
             const toggle = document.querySelector('.navbar-toggle');
             if (nav.classList.contains('show') && !nav.contains(event.target) && !toggle.contains(event.target)) {
                 nav.classList.remove('show');
+            }
+        });
+
+        // GENERIC Action Bar Toggle (Fallback for pages without specific IDs)
+        function toggleActions() {
+            const actions = document.querySelector('.action-bar');
+            if (actions) {
+                actions.classList.toggle('show');
+            }
+        }
+
+        // Close Action Bar when clicking outside
+        document.addEventListener('click', function (event) {
+            const actions = document.querySelector('.action-bar');
+            const toggle = document.querySelector('.action-toggle-btn');
+            if (actions && actions.classList.contains('show')) {
+                // Check if click is outside actions AND outside toggle
+                if (!actions.contains(event.target) && (!toggle || !toggle.contains(event.target))) {
+                    actions.classList.remove('show');
+                }
             }
         });
     </script>
