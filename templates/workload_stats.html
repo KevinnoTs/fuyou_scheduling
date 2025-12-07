@@ -25,8 +25,12 @@
                     </select>
                 </form>
 
-                <input type="text" id="searchInput" class="form-control" placeholder="搜索医生姓名..." onkeyup="filterTable()"
-                    style="width: 180px;">
+                <a href="{{ url_for('workload_stats', year=current_year, month=current_month, expand='0' if expand_mode else '1') }}"
+                    class="btn-outline" style="white-space: nowrap;">
+                    {{ '收起' if expand_mode else '展开当月' }}
+                </a>
+
+                <!-- Search input removed -->
 
                 <div style="display: flex; gap: 0.5rem;">
                     {% if current_user.role in ['admin', 'super_admin'] %}
@@ -45,24 +49,52 @@
         <table id="statsTable">
             <thead>
                 <tr>
-                    <th style="width: 4rem; min-width: 4rem;">医生</th>
-                    <th style="width: 5rem; min-width: 5rem;">当月总分</th>
-                    <th style="width: 8rem; min-width: 8rem; text-align: center;">操作</th>
+                    <th class="sticky-col first-col">姓名</th>
+
+                    {% if expand_mode %}
+                    {% for day in range(1, days_in_month + 1) %}
+                    <th class="cell-dense" style="text-align: center;">
+                        {{ day }}</th>
+                    {% endfor %}
+                    {% endif %}
+                    <th class="{{ '' if expand_mode else 'sticky-col-right-total' }}"
+                        style="width: 5rem; min-width: 5rem; max-width: 5rem; box-sizing: border-box;">当月总分</th>
+
+                    <th class="{{ '' if expand_mode else 'sticky-col-right-actions' }}"
+                        style="width: 8rem; min-width: 8rem; max-width: 8rem; box-sizing: border-box; text-align: center;">
+                        操作
+                    </th>
+                    {% if not expand_mode %}
                     <!-- Spacer Column -->
                     <th></th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
                 {% for item in stats %}
                 <tr {% if current_user.doctor_id==item.doctor.id %}class="current-user-row" {% endif %}>
-                    <td>
+                    <td class="sticky-col first-col">
                         <a href="{{ url_for('doctor_workload_calendar', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
-                            style="color: var(--primary-color); text-decoration: none; font-weight: bold;">
+                            style="color: var(--text-main); text-decoration: none; font-weight: bold;">
                             {{ item.doctor.name }}
                         </a>
                     </td>
-                    <td style="font-weight: bold; color: var(--primary-color);">{{ item.total_score }}</td>
-                    <td style="text-align: center;">
+
+                    {% if expand_mode %}
+                    {% for day in range(1, days_in_month + 1) %}
+                    <td class="cell-dense" style="text-align: center; border-right: 1px dashed #eee;">
+                        {% set score = item.daily_scores.get(day) %}
+                        {% if score %}
+                        <span style="color: var(--text-main);">{{ score }}</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    {% endif %}
+                    <td class="{{ '' if expand_mode else 'sticky-col-right-total' }}"
+                        style="font-weight: bold; color: var(--primary-color);">{{ item.total_score }}</td>
+
+                    <td class="{{ '' if expand_mode else 'sticky-col-right-actions' }}"
+                        style="text-align: center; width: 8rem; min-width: 8rem; max-width: 8rem; box-sizing: border-box;">
                         <div style="display: flex; gap: 5px; justify-content: center;">
                             <a href="{{ url_for('doctor_workload_calendar', doctor_id=item.doctor.id, year=current_year, month=current_month) }}"
                                 class="btn-outline"
@@ -76,8 +108,10 @@
                             </a>
                         </div>
                     </td>
+                    {% if not expand_mode %}
                     <!-- Spacer Cell -->
                     <td></td>
+                    {% endif %}
                 </tr>
                 {% else %}
                 <tr>
@@ -106,24 +140,6 @@
         }
     });
 
-    function filterTable() {
-        var input, filter, table, tr, td, i, txtValue;
-        input = document.getElementById("searchInput");
-        filter = input.value.toUpperCase();
-        table = document.getElementById("statsTable");
-        tr = table.getElementsByTagName("tr");
-
-        for (i = 1; i < tr.length; i++) {
-            td = tr[i].getElementsByTagName("td")[0]; // Doctor Name column
-            if (td) {
-                txtValue = td.textContent || td.innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-        }
-    }
+    // filterTable function removed as search input is gone
 </script>
 {% endblock %}

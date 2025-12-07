@@ -36,12 +36,32 @@ def register_workload_routes(app):
     @app.route('/workload')
     @login_required
     def workload_stats():
+        import calendar
         year, month = get_date_params()
         month_str = f"{year}-{month:02d}"
         selected_month_start = date(year, month, 1)
 
-        # Get doctors: Active OR (Resigned AND ResignationDate >= SelectedMonthStart)
-        # Ordered by display_order
+        # Expansion Logic
+        expand_mode = request.args.get('expand') == '1'
+        days_in_month = 0
+        daily_scores_map = {} # doctor_id -> {day: score}
+
+        if expand_mode:
+            _, days_in_month = calendar.monthrange(year, month)
+            # Fetch all records with scores for the month
+            records = db.session.query(WorkloadRecord.doctor_id, WorkloadRecord.report_date, WorkloadScore.score)\
+                .join(WorkloadScore, WorkloadRecord.item_name == WorkloadScore.item_name)\
+                .filter(func.strftime('%Y-%m', WorkloadRecord.report_date) == month_str)\
+                .all()
+            
+            for doc_id, r_date, score in records:
+                if not doc_id or not score: continue
+                day = r_date.day
+                if doc_id not in daily_scores_map:
+                    daily_scores_map[doc_id] = {}
+                daily_scores_map[doc_id][day] = daily_scores_map[doc_id].get(day, 0) + score
+
+        # Get doctors
         doctors = Doctor.query.filter(
             and_(
                 Doctor.title == '医师',
@@ -57,7 +77,6 @@ def register_workload_routes(app):
         
         stats = []
         for doctor in doctors:
-            # Calculate total score for this doctor in the selected month
             total_score = db.session.query(func.sum(WorkloadScore.score))\
                 .select_from(WorkloadRecord)\
                 .join(WorkloadScore, WorkloadRecord.item_name == WorkloadScore.item_name)\
@@ -65,15 +84,24 @@ def register_workload_routes(app):
                 .filter(func.strftime('%Y-%m', WorkloadRecord.report_date) == month_str)\
                 .scalar() or 0
             
-            stats.append({
+            item = {
                 'doctor': doctor,
                 'total_score': round(total_score, 2)
-            })
+            }
+            if expand_mode:
+                # Prepare a list or dict for template. Dict is easier for lookups.
+                doc_daily = daily_scores_map.get(doctor.id, {})
+                # Round daily scores
+                item['daily_scores'] = {d: round(s, 2) for d, s in doc_daily.items()}
+            
+            stats.append(item)
             
         return render_template('workload_stats.html', 
                              stats=stats, 
                              current_year=year,
                              current_month=month,
+                             expand_mode=expand_mode,
+                             days_in_month=days_in_month,
                              title='工作量统计')
 
     @app.route('/workload/records', methods=['GET', 'POST'])

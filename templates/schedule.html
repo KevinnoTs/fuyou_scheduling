@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
+{% block wrapper_class %}fixed-wrapper{% endblock %}
+
 {% block content %}
-<div class="card full-screen-card"
-    style="margin-bottom: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%;">
+<div class="card full-screen-card">
     <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
         <h2 style="flex-grow: 1;">排班表</h2>
@@ -35,7 +36,7 @@
         </div>
     </div>
 
-    <div class="table-container" style="flex: 1; overflow: auto; min-height: 0;">
+    <div class="table-container">
         <table class="schedule-table" id="scheduleTable" data-year="{{ year }}" data-month="{{ month }}">
             <thead>
                 <!-- Date Row -->
@@ -73,7 +74,7 @@
                         {% set cls = '' %}
                         {% if '休' in shift or '假' in shift or '探亲' in shift %}
                         {% set cls = 'shift-rest-type' %}
-                        {% elif '值' in shift or '夜' in shift %}
+                        {% elif '值' in shift %}
                         {% set cls = 'shift-duty-type' %}
                         {% elif '放射' in shift %}
                         {% set cls = 'shift-radiation' %}

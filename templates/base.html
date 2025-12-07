@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>妇幼影像科排班统计系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.17">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
     <style>
@@ -187,10 +187,10 @@
 
     <!-- 消息提示 -->
     <div class="flash-messages" id="flashMessages">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        {% for message in messages %}
-        <div class="alert">{{ message }}</div>
+        {% for category, message in messages %}
+        <div class="toast-message {{ category }}">{{ message }}</div>
         {% endfor %}
         {% endif %}
         {% endwith %}
@@ -223,7 +223,7 @@
         <div class="modal-content">
             <span class="modal-close" onclick="closeMobileLogin()">&times;</span>
             <h3 class="modal-title">用户登录</h3>
-            <form action="{{ url_for('login') }}" method="post" id="mobileLoginForm">
+            <form action="{{ url_for('login') }}" method="post" id="mobileLoginForm" novalidate>
                 <div class="form-group">
                     <label>用户名</label>
                     <input type="text" name="username" class="form-control" required>
@@ -279,8 +279,8 @@
                 alert.classList.add('is-hidden');
 
                 var container = document.getElementById('flashMessages');
-                var allAlerts = container.querySelectorAll('.alert');
-                var hiddenAlerts = container.querySelectorAll('.alert.is-hidden');
+                var allAlerts = container.querySelectorAll('.toast-message');
+                var hiddenAlerts = container.querySelectorAll('.toast-message.is-hidden');
 
                 if (allAlerts.length === hiddenAlerts.length) {
                     container.innerHTML = '';
@@ -292,7 +292,7 @@
         function showFlashMessage(message, type = 'info') {
             var container = document.getElementById('flashMessages');
             var alert = document.createElement('div');
-            alert.className = `alert ${type}`;
+            alert.className = `toast-message ${type}`;
             alert.textContent = message;
             container.appendChild(alert);
 
