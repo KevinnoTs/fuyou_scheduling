@@ -29,7 +29,7 @@
 
                 <a href="{{ url_for('workload_stats', year=current_year, month=current_month, expand='0' if expand_mode else '1') }}"
                     class="btn-outline" style="white-space: nowrap;">
-                    {{ '收起' if expand_mode else '展开当月' }}
+                    {{ '收起明细' if expand_mode else '展开当月' }}
                 </a>
 
                 <!-- Search input removed -->
@@ -48,7 +48,7 @@
     </div>
 
     <div class="table-container">
-        <table id="statsTable">
+        <table id="statsTable" class="{{ 'mode-expanded' if expand_mode else 'mode-collapsed' }}">
             <thead>
                 <tr>
                     <th class="sticky-col first-col">姓名</th>

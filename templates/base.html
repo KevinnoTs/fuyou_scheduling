@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>妇幼影像科排班统计系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.40">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.90">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
     <style>
@@ -141,22 +141,97 @@
     <!-- 导航栏 -->
     <nav class="navbar">
         <a href="{{ url_for('index') }}" class="navbar-brand">
-            <span style="font-size: 1.8rem;">🏥</span> 妇幼影像科排班统计系统
+            <!-- SVG Logo: Theme Aware (Quatrefoil Style) -->
+            <svg width="32" height="32" viewBox="0 0 100 100" style="flex-shrink: 0; margin-right: 8px;" fill="none">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--primary-color);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--primary-dark);stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <!-- Outer Ring/Border -->
+                <path
+                    d="M50 5 L50 5 Q75 5 80 25 Q95 25 95 50 Q95 75 80 75 Q75 95 50 95 Q25 95 20 75 Q5 75 5 50 Q5 25 20 25 Q25 5 50 5 Z"
+                    stroke="url(#logoGradient)" stroke-width="5" fill="none" />
+
+                <!-- Inner Filled Shape (Clover) -->
+                <path
+                    d="M50 15 Q70 15 75 30 L75 30 Q85 30 85 50 Q85 70 75 70 L75 70 Q70 85 50 85 Q30 85 25 70 L25 70 Q15 70 15 50 Q15 30 25 30 L25 30 Q30 15 50 15 Z"
+                    fill="url(#logoGradient)" />
+
+                <!-- White Cross -->
+                <rect x="40" y="25" width="20" height="50" rx="2" fill="var(--white)" />
+                <rect x="25" y="40" width="50" height="20" rx="2" fill="var(--white)" />
+            </svg>
+            <span style="font-size: 1.25rem;">妇幼影像科排班统计系统</span>
         </a>
         <button class="navbar-toggle" onclick="toggleNavbar()">☰</button>
         <div class="navbar-nav" id="navbarNav">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('schedule') }}" class="nav-btn"><span class="nav-icon">📅</span> <span>排班表</span></a>
+            <a href="{{ url_for('schedule') }}" class="nav-btn">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="1" x2="16" y2="5"></line>
+                        <line x1="8" y1="1" x2="8" y2="5"></line>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                    </svg>
+                </span>
+                <span>排班表</span>
+            </a>
             {% if current_user.role in ['doctor', 'admin', 'super_admin'] %}
-            <a href="{{ url_for('workload_stats') }}" class="nav-btn"><span class="nav-icon">📊</span>
-                <span>工作量统计</span></a>
+            <a href="{{ url_for('workload_stats') }}" class="nav-btn">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                </span>
+                <span>工作量统计</span>
+            </a>
             {% endif %}
-            <a href="{{ url_for('doctors_list') }}" class="nav-btn"><span class="nav-icon">👨‍⚕️</span>
+            <a href="{{ url_for('doctors_list') }}" class="nav-btn"><span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <!-- Compressed to 18px height (3-21) -->
+                        <path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="3" width="8" height="4" rx="1" ry="1"></rect>
+                        <path d="M12 12h4"></path>
+                        <path d="M12 16h4"></path>
+                        <path d="M8 12h.01"></path>
+                        <path d="M8 16h.01"></path>
+                    </svg>
+                </span>
                 <span>医生列表</span></a>
             {% if current_user.role in ['admin', 'super_admin'] %}
-            <a href="{{ url_for('users_list') }}" class="nav-btn"><span class="nav-icon">👥</span> <span>用户列表</span></a>
-            <a href="{{ url_for('holidays_list') }}" class="nav-btn"><span class="nav-icon">🏖️</span>
-                <span>节假日管理</span></a>
+            <a href="{{ url_for('users_list') }}" class="nav-btn">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </span>
+                <span>用户列表</span>
+            </a>
+            <a href="{{ url_for('holidays_list') }}" class="nav-btn">
+                <span class="nav-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M18 9h1a4 4 0 0 1 0 8h-1"></path>
+                        <path d="M2 9h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V9z"></path>
+                        <line x1="6" y1="2" x2="6" y2="5"></line>
+                        <line x1="10" y1="2" x2="10" y2="5"></line>
+                        <line x1="14" y1="2" x2="14" y2="5"></line>
+                    </svg>
+                </span>
+                <span>节假日管理</span>
+            </a>
             {% endif %}
 
             <!-- 用户下拉菜单 -->
@@ -165,8 +240,33 @@
                     {{ current_user.real_name or current_user.username }} ▼
                 </button>
                 <div class="dropdown-content" id="userDropdown">
-                    <a href="#" onclick="openThemeModal(event)"><span class="menu-icon nav-icon">🎨</span> 显示设置</a>
-                    <a href="{{ url_for('logout') }}"><span class="menu-icon nav-icon">🚪</span> 退出登录</a>
+                    <a href="#" onclick="openThemeModal(event)" style="display: flex; align-items: center;">
+                        <span style="display: inline-flex; width: 20px; margin-right: 8px; justify-content: center;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
+                                <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
+                                <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
+                                <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
+                                <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
+                                <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+                            </svg>
+                        </span>
+                        显示设置
+                    </a>
+                    <a href="{{ url_for('logout') }}"
+                        style="display: flex; align-items: center; color: var(--primary-color);">
+                        <span style="display: inline-flex; width: 20px; margin-right: 8px; justify-content: center;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </span>
+                        退出登录
+                    </a>
                 </div>
             </div>
             {% else %}
@@ -209,7 +309,7 @@
     <!-- Footer -->
     <footer class="footer" style="margin-bottom: 0.5rem;">
         <div class="container" style="text-align: center; padding: 0.5rem 0;">
-            <div class="footer-content">
+            <div class="footer-content" style="letter-spacing: normal;">
                 <span class="footer-item">© 2025 妇幼影像科排班统计系统</span>
                 <span class="footer-separator">|</span>
                 <span class="footer-item">Powered by KevinnoTs</span>

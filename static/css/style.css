@@ -187,7 +187,8 @@ body.dark .navbar {
     border-radius: var(--radius);
     transition: all 0.3s ease;
     white-space: nowrap;
-    /* Prevent link text wrapping */
+    display: flex;
+    align-items: center;
 }
 
 .nav-btn:hover {
@@ -2680,8 +2681,13 @@ body.dark .sticky-col {
 
 /* FORCE MOBILE OVERRIDE (v4.39 fix) */
 @media (max-width: 1200px) {
-    .action-bar form .form-select-year { width: 6rem !important; }
-    .action-bar form .form-select-month { width: 5rem !important; }
+    .action-bar form .form-select-year {
+        width: 6rem !important;
+    }
+
+    .action-bar form .form-select-month {
+        width: 5rem !important;
+    }
 }
 
 
@@ -2697,5 +2703,369 @@ body.dark .sticky-col {
 
 /* FORCE MOBILE OVERRIDE for Search */
 @media (max-width: 1200px) {
-    .action-bar .form-search-input { width: 14rem !important; }
+    .action-bar .form-search-input {
+        width: 14rem !important;
+    }
+}
+
+
+/* FIX: Spacer Row Sticky Column Penetration */
+.spacer-row .sticky-col {
+    background-color: var(--white) !important;
+    z-index: 31 !important;
+}
+
+body.dark .spacer-row .sticky-col {
+    background-color: #2d2d2d !important;
+}
+
+
+/* RETRY FIX v4.43: Spacer Row Sticky Opaque - HIGH SPECIFICITY */
+body .schedule-table tbody tr.spacer-row td.sticky-col {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border-right: 1px solid #e0e0e0 !important;
+    z-index: 35 !important;
+}
+
+body.dark .schedule-table tbody tr.spacer-row td.sticky-col {
+    background-color: #2d2d2d !important;
+    border-right-color: #444 !important;
+}
+
+
+/* FIX: Top-Left Sticky Corner Z-Index (Workload/Schedule) */
+.table-container thead th.sticky-col {
+    z-index: 40 !important;
+    position: sticky !important;
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+}
+
+body.dark .table-container thead th.sticky-col {
+    background-color: #2d2d2d !important;
+}
+
+
+/* RETRY FIX v4.46: Workload Top-Left Z-Index & Color */
+.table-container thead th.sticky-col {
+    z-index: 100 !important;
+    background-color: var(--secondary-color) !important;
+    background-image: none !important;
+    color: var(--text-main) !important;
+}
+
+body.dark .table-container thead th.sticky-col {
+    background-color: var(--white) !important;
+    background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+    color: var(--primary-color) !important;
+}
+
+
+/* RETRY FIX v4.47: Mobile Layout & Sticky Column Stacking */
+/* 1. Mobile Container Padding (Prevent Nav Overlap) */
+@media (max-width: 1200px) {
+    /* Legacy padding removed */
+
+    .fixed-wrapper {
+        padding-top: 1rem !important;
+        height: calc(100vh - 60px) !important;
+        top: 60px !important;
+    }
+}
+
+/* 2. Workload/Schedule Sticky Column Stacking (Body) */
+td.sticky-col {
+    z-index: 30 !important;
+    position: sticky !important;
+    left: 0;
+    background-color: var(--white);
+    /* Ensure opacity */
+}
+
+body.dark td.sticky-col {
+    background-color: #2d2d2d !important;
+}
+
+/* Ensure Workload Top-Left Header uses solid color (Reinforce v4.46) */
+.table-container thead th.sticky-col {
+    background-color: var(--secondary-color) !important;
+    background-image: none !important;
+}
+
+
+/* FIX: Mobile Layout & Workload Stacking (v4.48 Refined) */
+/* 1. Mobile Header Clearance (Increased to 100px) */
+@media (max-width: 1200px) {
+
+    /* removed body padding to fix white space above navbar */
+    .fixed-wrapper {
+        top: 80px !important;
+        /* Adjusted for cleaner fit */
+        height: calc(100vh - 80px) !important;
+        padding-top: 10px !important;
+    }
+}
+
+/* 2. Workload Sticky Column Stacking (Winner) */
+body td.sticky-col {
+    z-index: 60 !important;
+    /* Beat standard content */
+    position: sticky !important;
+    left: 0;
+    background-color: var(--white) !important;
+    border-right: 2px solid rgba(0, 0, 0, 0.1) !important;
+    /* Visual separator */
+}
+
+/* Ensure standard cells are lower */
+body td:not(.sticky-col) {
+    z-index: 1;
+    position: relative;
+}
+
+body.dark td.sticky-col {
+    background-color: #2d2d2d !important;
+    border-right-color: #444 !important;
+}
+
+/* Unify SVG Icon Sizing */
+.nav-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* FIX: Mobile Workload Overlap (Only for Collapsed Mode) */
+/* NUCLEAR OPTION: High Specificity to beat 'Final Authority' */
+@media (max-width: 768px) {
+
+    /* If mode-collapsed, disable ALL stickiness to ensure continuous flow */
+    body .mode-collapsed .sticky-col,
+    body .mode-collapsed .sticky-col-right-total,
+    body .mode-collapsed .sticky-col-right-actions,
+    body .mode-collapsed th.sticky-col,
+    body .mode-collapsed td.sticky-col,
+    body.dark .mode-collapsed .sticky-col,
+    body.dark .mode-collapsed .sticky-col-right-total,
+    body.dark .mode-collapsed .sticky-col-right-actions {
+        position: static !important;
+        border-right: none !important;
+        box-shadow: none !important;
+        /* Ensure width is not forced to 6rem on mobile if content is larger */
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
+        left: auto !important;
+        z-index: 1 !important;
+    }
+
+    /* Force background transparency ONLY for body cells (td) to prevent white boxes */
+    body .mode-collapsed td.sticky-col,
+    body.dark .mode-collapsed td.sticky-col {
+        background-color: transparent !important;
+    }
+
+    /* SPECIFIC FIX FOR HEADERS (v4.69): Restore TINT for Dark Mode Headers */
+    /* Override the 'Sticky Opaque' rule from line 2758 */
+    body.dark .mode-collapsed th.sticky-col,
+    body.dark .table-container thead tr .mode-collapsed th.sticky-col {
+        background-color: var(--white) !important;
+        background-image: linear-gradient(rgba(var(--primary-rgb), 0.15), rgba(var(--primary-rgb), 0.15)) !important;
+        color: var(--primary-color) !important;
+    }
+}
+
+/* FIX: Force Fixed Widths for Workload Stats Table (v4.85) */
+/* "Name" Column */
+#statsTable .sticky-col.first-col {
+    min-width: 100px !important;
+    width: 100px !important;
+    max-width: 100px !important;
+}
+
+/* "Total Score" Column */
+#statsTable .sticky-col-right-total {
+    min-width: 80px !important;
+    width: 80px !important;
+}
+
+/* "Actions" Column */
+#statsTable .sticky-col-right-actions {
+    min-width: 140px !important;
+    width: 140px !important;
+}
+
+/* FIX: Standardize Action Button Spacing (v4.90) */
+.action-bar,
+.action-content-wrapper,
+.holiday-actions-group,
+.holiday-btn-subgroup,
+.form-inline {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    /* Force uniform 8px gap */
+    flex-wrap: wrap;
+    /* Prevent overflow on small screens */
+}
+
+/* Remove nested margins that might double the gap */
+.action-bar>*,
+.action-content-wrapper>*,
+.holiday-actions-group>* {
+    margin: 0 !important;
+}
+
+/* Workload specific tweaks if needed */
+.action-content-wrapper {
+    width: 100%;
+}
+
+/* FIX: Prevent Adaptive Shrinking for All Tables (v4.84) */
+table th,
+table td {
+    white-space: nowrap !important;
+}
+
+/* WORKLOAD HEADER COLLAPSE CONTROL (v4.79) */
+.workload-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (max-width: 1200px) {
+
+    /* Hide controls by default on mobile */
+    .workload-header-controls {
+        display: none;
+        flex-direction: column;
+        align-items: flex-end;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: var(--white);
+        padding: 1rem;
+        box-shadow: var(--shadow-md);
+        border-radius: var(--radius);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        width: auto;
+        min-width: 200px;
+    }
+
+    body.dark .workload-header-controls {
+        background-color: #2d2d2d;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Show when toggled */
+    .workload-header-controls.show {
+        display: flex;
+    }
+
+    /* Adjust children for dropdown look */
+    .workload-header-controls .summary-bar {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+        margin-right: 0;
+        margin-bottom: 0.8rem;
+        padding-bottom: 0.8rem;
+        width: 100%;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        /* Unity separator */
+    }
+
+    body.dark .workload-header-controls .summary-bar {
+        border-bottom-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .workload-header-controls .action-bar {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+/* FIX: Prevent Horizontal Scroll from Triggering "Back" Gesture on Mobile */
+/* FIX: Universal Mobile Scroll (v4.78) */
+.table-container,
+.calendar-container {
+    /* Ensure scrollability */
+    overflow-x: auto !important;
+    /* Smooth momentum scrolling (iOS) */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent Back Gesture chaining (Android/iOS) - 'contain' is safer than 'none' */
+    overscroll-behavior-x: contain;
+    /* Explicitly allow 2D panning (fixes "Stuck" issues) */
+    touch-action: pan-x pan-y;
+}
+
+/* MOBILE CALENDAR SCALING (v4.73 CSS SYNTAX FIX) */
+/* (Previous syntax error prevented these from applying) */
+@media (max-width: 768px) {
+
+    /* 1. Workload Calendar Grid Compact Mode */
+    .calendar-grid {
+        /* Reduce min-width further to 75px */
+        grid-template-columns: repeat(7, minmax(75px, 1fr)) !important;
+        gap: 1px !important;
+
+        /* FIX SCROLL RENDERING: Ensure background covers full scroll width */
+        width: max-content !important;
+        min-width: 100% !important;
+    }
+
+    /* Wrap the grid container to handle scrolling properly */
+    .calendar-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .calendar-cell {
+        padding: 2px 2px !important;
+    }
+
+    /* Reduce font size for date numbers */
+    .calendar-cell .date-number {
+        font-size: 1.2rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Hide less important stats if needed or shrink further */
+    .calendar-cell .stat-item,
+    .calendar-cell .stat-value,
+    .calendar-cell .score-value {
+        font-size: 0.70rem !important;
+    }
+
+    .calendar-tag {
+        font-size: 0.6rem !important;
+        padding: 0px 2px !important;
+        top: 2px !important;
+        right: 2px !important;
+        border-radius: 2px !important;
+    }
+
+    /* 2. Global Compact Table Mode (All Tables) */
+    table th,
+    table td {
+        padding: 5px 3px !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* FIX SCROLL RENDERING for All Tables */
+    table {
+        min-width: 100% !important;
+        /* create context so background covers scroll */
+    }
+
+    /* Shrink the sticky name column */
+    .schedule-table .sticky-col.first-col {
+        width: 4rem !important;
+        min-width: 4rem !important;
+        max-width: 4rem !important;
+    }
 }

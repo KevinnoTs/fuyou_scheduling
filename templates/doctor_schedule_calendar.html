@@ -138,12 +138,38 @@
 <div class="card full-screen-card">
     <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
-        <h2 style="flex-grow: 1;">{{ doctor.name }} - {{ current_year }}年{{ current_month }}月 排班详情</h2>
+        <h2 style="flex-grow: 1;">{{ doctor.name }} {{ (current_year|string)[-2:] }}年{{ current_month }}月 排班表</h2>
 
-        <div class="action-bar" style="position: static; box-shadow: none; padding: 0; background: none;">
-            <a href="{{ url_for('schedule', year=current_year, month=current_month) }}" class="btn-outline">返回排班表</a>
+        <!-- Mobile Toggle Button -->
+        <button class="action-toggle-btn" onclick="toggleScheduleControls()" style="margin-left: 0.5rem;">
+            ☰
+        </button>
+
+        <!-- Collapsible Container (Reusing Workload Styles) -->
+        <div class="workload-header-controls" id="scheduleControls">
+            <div class="action-bar" style="position: static; box-shadow: none; padding: 0; background: none;">
+                <a href="{{ url_for('schedule', year=current_year, month=current_month) }}"
+                    class="btn-outline">返回排班表</a>
+            </div>
         </div>
     </div>
+
+    <script>
+        function toggleScheduleControls() {
+            var controls = document.getElementById('scheduleControls');
+            controls.classList.toggle('show');
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', function (event) {
+            var controls = document.getElementById('scheduleControls');
+            var toggleBtn = document.querySelector('.action-toggle-btn');
+
+            if (!controls.contains(event.target) && !toggleBtn.contains(event.target)) {
+                controls.classList.remove('show');
+            }
+        });
+    </script>
 
     <div class="calendar-container">
         <div class="calendar-grid">

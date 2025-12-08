@@ -207,24 +207,49 @@
 <div class="card full-screen-card">
     <div
         style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; position: relative;">
-        <h2 style="flex-grow: 1;">{{ doctor.name }} - {{ current_year }}年{{ current_month }}月 工作量详情</h2>
+        <h2 style="flex-grow: 1;">{{ doctor.name }} {{ (current_year|string)[-2:] }}年{{ current_month }}月 工作量</h2>
 
-        <div class="summary-bar">
-            <div class="summary-item">
-                <span class="summary-label">项目数:</span>
-                <span class="summary-value">{{ total_items }}</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">总分:</span>
-                <span class="summary-value">{{ total_score }}</span>
-            </div>
-        </div>
+        <!-- Mobile Toggle Button -->
+        <button class="action-toggle-btn" onclick="toggleWorkloadControls()" style="margin-left: 0.5rem;">
+            ☰
+        </button>
 
-        <div class="action-bar" style="position: static; box-shadow: none; padding: 0; background: none;">
-            <a href="{{ url_for('workload_stats', year=current_year, month=current_month) }}"
-                class="btn-outline">返回统计</a>
+        <!-- Collapsible Container -->
+        <div class="workload-header-controls" id="workloadControls">
+            <div class="summary-bar">
+                <div class="summary-item">
+                    <span class="summary-label">项目数:</span>
+                    <span class="summary-value">{{ total_items }}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">总分:</span>
+                    <span class="summary-value">{{ total_score }}</span>
+                </div>
+            </div>
+
+            <div class="action-bar" style="position: static; box-shadow: none; padding: 0; background: none;">
+                <a href="{{ url_for('workload_stats', year=current_year, month=current_month) }}"
+                    class="btn-outline">返回统计</a>
+            </div>
         </div>
     </div>
+
+    <script>
+        function toggleWorkloadControls() {
+            var controls = document.getElementById('workloadControls');
+            controls.classList.toggle('show');
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', function (event) {
+            var controls = document.getElementById('workloadControls');
+            var toggleBtn = document.querySelector('.action-toggle-btn');
+
+            if (!controls.contains(event.target) && !toggleBtn.contains(event.target)) {
+                controls.classList.remove('show');
+            }
+        });
+    </script>
 
     <div class="calendar-container">
         <div class="calendar-grid">
