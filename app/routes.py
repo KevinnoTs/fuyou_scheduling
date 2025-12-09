@@ -75,11 +75,26 @@ def register_routes(app):
             flash('该账户已被禁用，请联系管理员')
             return redirect(url_for('index'))
             
-        login_user(user)
+        remember = request.form.get('remember') == 'on'
+        login_user(user, remember=remember)
+
+        # Sync theme from cookies if available
+        theme_mode = request.cookies.get('theme_mode')
+        theme_color = request.cookies.get('theme_color')
+        
+        if theme_mode or theme_color:
+            if theme_mode:
+                user.theme_mode = theme_mode
+            if theme_color:
+                user.theme_color = theme_color
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': True, 'redirect_url': url_for('schedule')})
         return redirect(url_for('schedule'))
-
 
     @app.route('/logout')
     def logout():

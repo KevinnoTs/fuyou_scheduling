@@ -11,7 +11,7 @@
             ☰
         </button>
         <div class="action-bar" id="pageActions">
-            <div class="action-content-wrapper">
+            <div class="action-content-wrapper" style="gap: 0.5rem;">
                 <form method="get" class="form-inline" style="display: flex; gap: 0.5rem; align-items: center;">
                     <div style="display: flex; gap: 0.5rem;">
                         <select name="year" class="form-control form-select-year" onchange="this.form.submit()">
@@ -29,7 +29,7 @@
 
                 <a href="{{ url_for('workload_stats', year=current_year, month=current_month, expand='0' if expand_mode else '1') }}"
                     class="btn-outline" style="white-space: nowrap;">
-                    {{ '收起明细' if expand_mode else '展开当月' }}
+                    {{ '收回详情' if expand_mode else '展开当月' }}
                 </a>
 
                 <!-- Search input removed -->

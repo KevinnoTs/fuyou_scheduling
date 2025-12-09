@@ -1,26 +1,130 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="hero-section">
-    <h1 class="hero-title">智能排班，高效医疗</h1>
-    <p class="hero-subtitle">专为妇幼影像科设计的现代化排班统计系统。简化流程，提升效率，让医护人员专注于更重要的事。</p>
-</div>
+{% block styles %}
+{% endblock %}
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-    <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
-        <h3>智能排班</h3>
-        <p style="color: var(--text-light);">自动化排班算法，支持复杂的轮班规则和节假日调整。</p>
-    </div>
-    <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
-        <h3>工时统计</h3>
-        <p style="color: var(--text-light);">自动计算工时与工作量，生成精确的报表数据。</p>
-    </div>
-    <div class="card" style="text-align: center;">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">👩‍⚕️</div>
-        <h3>人员管理</h3>
-        <p style="color: var(--text-light);">便捷管理医生与护理人员信息，职务、专长一目了然。</p>
+{% block navbar %}{% endblock %}
+
+{% block wrapper_class %}{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="login-page-wrapper">
+    <div class="login-card">
+
+        <!-- Left Side: Branding -->
+        <div class="login-left">
+            <div class="brand-content">
+                <div class="login-logo-wrapper">
+                    <svg width="64" height="64" viewBox="0 0 100 100" fill="none">
+                        <defs>
+                            <linearGradient id="loginLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#FF8E53;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <path
+                            d="M50 5 L50 5 Q75 5 80 25 Q95 25 95 50 Q95 75 80 75 Q75 95 50 95 Q25 95 20 75 Q5 75 5 50 Q5 25 20 25 Q25 5 50 5 Z"
+                            stroke="white" stroke-width="4" fill="none" class="brand-stroke" />
+                        <path
+                            d="M50 15 Q70 15 75 30 L75 30 Q85 30 85 50 Q85 70 75 70 L75 70 Q70 85 50 85 Q30 85 25 70 L25 70 Q15 70 15 50 Q15 30 25 30 L25 30 Q30 15 50 15 Z"
+                            fill="white" />
+                        <rect x="40" y="25" width="20" height="50" rx="2" fill="var(--primary-color)" />
+                        <rect x="25" y="40" width="50" height="20" rx="2" fill="var(--primary-color)" />
+                    </svg>
+                </div>
+                <h1 class="brand-title">妇幼影像科WFM</h1>
+                <p class="brand-subtitle">专为妇幼影像科量身打造：<br>WFM（Workforce Management）系统</p>
+
+                <div class="brand-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">📅</span>
+                        <span>智能排班系统</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">⏰ </span>
+                        <span>工时自动计算</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📊</span>
+                        <span>工作量统计分析</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative Circle -->
+            <div class="brand-circle"></div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="login-right">
+            <!-- Settings Trigger -->
+            <div class="login-settings-btn" onclick="openThemeModal(event)" title="显示设置">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="14.31" y1="8" x2="20.05" y2="17.94"></line>
+                    <line x1="9.69" y1="8" x2="21.17" y2="8"></line>
+                    <line x1="7.38" y1="12" x2="13.12" y2="2.06"></line>
+                    <line x1="9.69" y1="16" x2="3.95" y2="6.06"></line>
+                    <line x1="14.31" y1="16" x2="2.83" y2="16"></line>
+                    <line x1="16.62" y1="12" x2="10.88" y2="21.94"></line>
+                </svg>
+            </div>
+            <div class="login-form-container">
+                <h2 class="welcome-title">欢迎回来</h2>
+
+                <form action="{{ url_for('login') }}" method="post" class="modern-login-form" id="loginPageForm"
+                    novalidate onsubmit="handleLoginSubmit(event)">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" name="username" class="form-control" placeholder="请输入用户名" required>
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" name="password" class="form-control" placeholder="请输入密码" required>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember"> 记住我
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-block btn-lg">登录系统</button>
+                </form>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const form = document.getElementById('loginPageForm');
+                    if (!form) return;
+
+                    const usernameInput = form.querySelector('input[name="username"]');
+
+                    // 1. Restore username from localStorage
+                    const saved = localStorage.getItem('fuyou_username');
+                    if (saved) {
+                        usernameInput.value = saved;
+                        // Optional: Auto-focus password if username is filled
+                        if (saved.trim().length > 0) {
+                            const passwordInput = form.querySelector('input[name="password"]');
+                            if (passwordInput) passwordInput.focus();
+                        }
+                    }
+
+                    // 2. Save username on input
+                    usernameInput.addEventListener('input', (e) => {
+                        localStorage.setItem('fuyou_username', e.target.value.trim());
+                    });
+
+                    // 3. Save on submit (double check)
+                    form.addEventListener('submit', () => {
+                        localStorage.setItem('fuyou_username', usernameInput.value.trim());
+                    });
+                });
+            </script>
+        </div>
     </div>
 </div>
 {% endblock %}

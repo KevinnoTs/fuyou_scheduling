@@ -4,170 +4,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>妇幼影像科排班统计系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4.90">
+    <meta name="theme-color" content="#ffffff">
+    <title>妇幼影像科WFM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=5.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6.0">
+    {% block styles %}{% endblock %}
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏥</text></svg>">
-    <style>
-        /* Internal styles for components specific to base layout */
-        .login-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .login-form {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .login-inputs {
-            display: flex;
-            gap: 0.5rem;
-            max-width: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: all 0.3s ease-out;
-        }
-
-        .login-inputs.active {
-            max-width: 400px;
-            opacity: 1;
-            padding-right: 0.5rem;
-        }
-
-        .login-inputs input {
-            padding: 0.4rem 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            width: 140px;
-            outline: none;
-            font-size: 0.9rem;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .login-inputs input:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
-        }
-
-        .login-btn {
-            padding: 0.4rem 1.2rem;
-            font-size: 0.9rem;
-        }
-
-        .navbar-nav {
-            overflow: visible;
-        }
-
-        .user-menu {
-            position: relative;
-            margin-left: 1rem;
-            cursor: pointer;
-        }
-
-        /* User Name Button Style - Matching Nav Links */
-        .user-name {
-            color: var(--text-main);
-            font-size: 1rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius);
-            transition: all 0.3s ease;
-            background: transparent;
-            border: none;
-            font-family: inherit;
-            cursor: pointer;
-            outline: none;
-            line-height: 1.6;
-        }
-
-        .user-name:hover,
-        .user-menu.active .user-name {
-            background-color: var(--secondary-color);
-            color: var(--primary-dark);
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: calc(100% + 10px);
-            background-color: var(--white);
-            min-width: 160px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            border-radius: 12px;
-            z-index: 1001;
-            padding: 0.5rem 0;
-            opacity: 0;
-            transform: translateY(-10px) scale(0.95);
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            transform-origin: top right;
-        }
-
-        .dropdown-content.show {
-            display: block;
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-
-        .dropdown-content::before {
-            content: "";
-            position: absolute;
-            top: -6px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-            transition: background-color 0.2s;
-        }
-
-        .dropdown-content a:hover {
-            background-color: var(--bg-light);
-            color: var(--primary-color);
-        }
-    </style>
 </head>
 
 <body
-    class="{{ current_user.theme_mode if current_user.is_authenticated and current_user.theme_mode else request.cookies.get('theme_mode', 'light') }} theme-{{ current_user.theme_color if current_user.is_authenticated and current_user.theme_color else request.cookies.get('theme_color', 'orange') }}"
-    style="display: flex; flex-direction: column; height: 100vh; margin: 0; overflow: hidden;">
+    class="{{ current_user.theme_mode if current_user.is_authenticated and current_user.theme_mode else request.cookies.get('theme_mode', 'light') }} theme-{{ current_user.theme_color if current_user.is_authenticated and current_user.theme_color else request.cookies.get('theme_color', 'orange') }}">
     <!-- 导航栏 -->
+    {% block navbar %}
     <nav class="navbar">
         <a href="{{ url_for('index') }}" class="navbar-brand">
-            <!-- SVG Logo: Theme Aware (Quatrefoil Style) -->
+            <!-- SVG Logo: White for Colored Navbar -->
             <svg width="32" height="32" viewBox="0 0 100 100" style="flex-shrink: 0; margin-right: 8px;" fill="none">
-                <defs>
-                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:var(--primary-color);stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:var(--primary-dark);stop-opacity:1" />
-                    </linearGradient>
-                </defs>
                 <!-- Outer Ring/Border -->
                 <path
                     d="M50 5 L50 5 Q75 5 80 25 Q95 25 95 50 Q95 75 80 75 Q75 95 50 95 Q25 95 20 75 Q5 75 5 50 Q5 25 20 25 Q25 5 50 5 Z"
-                    stroke="url(#logoGradient)" stroke-width="5" fill="none" />
+                    stroke="var(--text-brand)" stroke-width="5" fill="none" opacity="0.9" />
 
                 <!-- Inner Filled Shape (Clover) -->
                 <path
                     d="M50 15 Q70 15 75 30 L75 30 Q85 30 85 50 Q85 70 75 70 L75 70 Q70 85 50 85 Q30 85 25 70 L25 70 Q15 70 15 50 Q15 30 25 30 L25 30 Q30 15 50 15 Z"
-                    fill="url(#logoGradient)" />
+                    fill="var(--text-brand)" />
 
-                <!-- White Cross -->
-                <rect x="40" y="25" width="20" height="50" rx="2" fill="var(--white)" />
-                <rect x="25" y="40" width="50" height="20" rx="2" fill="var(--white)" />
+                <!-- Cross Cutout (Actually Primary Color to match BG or Semi-Transparent) -->
+                <!-- Ideally this should be "cut out" but since we can't easily do composite operations inline, 
+                     we will use a slightly transparent white overlay or just rely on the shape. 
+                     Let's use a subtle shadow or just leave it white on white? No.
+                     Let's make the Cross bars SEMI-TRANSPARENT PRIMARY COLOR to look like "glass" on the white logo. -->
+                <rect x="40" y="25" width="20" height="50" rx="2" fill="var(--primary-color)" />
+                <rect x="25" y="40" width="50" height="20" rx="2" fill="var(--primary-color)" />
             </svg>
-            <span style="font-size: 1.25rem;">妇幼影像科排班统计系统</span>
+            <span style="font-size: 1.25rem;">妇幼影像科WFM</span>
         </a>
-        <button class="navbar-toggle" onclick="toggleNavbar()">☰</button>
+
+        {% if current_user.is_authenticated %}
+        <button class="navbar-toggle" onclick="toggleNavbar()" style="color: var(--text-brand);">☰</button>
         <div class="navbar-nav" id="navbarNav">
-            {% if current_user.is_authenticated %}
             <a href="{{ url_for('schedule') }}" class="nav-btn">
                 <span class="nav-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"
@@ -255,8 +132,7 @@
                         </span>
                         显示设置
                     </a>
-                    <a href="{{ url_for('logout') }}"
-                        style="display: flex; align-items: center; color: var(--primary-color);">
+                    <a href="{{ url_for('logout') }}" style="display: flex; align-items: center;">
                         <span style="display: inline-flex; width: 20px; margin-right: 8px; justify-content: center;">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -269,23 +145,15 @@
                     </a>
                 </div>
             </div>
-            {% else %}
-            <!-- 登录交互 -->
-            <div class="login-wrapper">
-                <form action="{{ url_for('login') }}" method="post" class="login-form" id="loginForm" novalidate>
-                    <div class="login-inputs" id="loginInputs">
-                        <input type="text" name="username" placeholder="用户名" required disabled>
-                        <input type="password" name="password" placeholder="密码" required disabled>
-                    </div>
-                    <button type="button" class="btn-primary login-btn" id="loginExpandBtn"
-                        onclick="expandLogin(event)">登录</button>
-                    <button type="submit" class="btn-primary login-btn" id="loginSubmitBtn"
-                        style="display: none;">确认</button>
-                </form>
-            </div>
-            {% endif %}
         </div>
+        {% else %}
+        <!-- 统一登录按钮 -->
+        <div class="login-wrapper">
+            <button type="button" class="btn-primary login-btn" onclick="openLoginModal(event)">登录</button>
+        </div>
+        {% endif %}
     </nav>
+    {% endblock %}
 
     <!-- 消息提示 -->
     <div class="flash-messages" id="flashMessages">
@@ -307,6 +175,8 @@
     </div>
 
     <!-- Footer -->
+    <!-- Footer -->
+    {% block footer %}
     <footer class="footer" style="margin-bottom: 0.5rem;">
         <div class="container" style="text-align: center; padding: 0.5rem 0;">
             <div class="footer-content" style="letter-spacing: normal;">
@@ -319,13 +189,14 @@
             </div>
         </div>
     </footer>
+    {% endblock %}
 
-    <!-- Mobile Login Modal -->
-    <div class="modal-overlay" id="mobileLoginModal">
+    <!-- Unified Login Modal -->
+    <div class="modal-overlay" id="loginModal">
         <div class="modal-content">
-            <span class="modal-close" onclick="closeMobileLogin()">&times;</span>
+            <span class="modal-close" onclick="closeLoginModal()">&times;</span>
             <h3 class="modal-title">用户登录</h3>
-            <form action="{{ url_for('login') }}" method="post" id="mobileLoginForm" novalidate>
+            <form action="{{ url_for('login') }}" method="post" id="loginFormModal" novalidate>
                 <div class="form-group">
                     <label>用户名</label>
                     <input type="text" name="username" class="form-control" required>
@@ -372,52 +243,90 @@
 
     <!-- 脚本 -->
     <script>
-        // 移除 Alert 的通用逻辑
-        function dismissAlert(alert) {
-            alert.classList.add('fade-out');
-            alert.addEventListener('animationend', function () {
-                alert.style.visibility = 'hidden';
-                alert.style.pointerEvents = 'none';
-                alert.classList.add('is-hidden');
-
-                var container = document.getElementById('flashMessages');
-                var allAlerts = container.querySelectorAll('.toast-message');
-                var hiddenAlerts = container.querySelectorAll('.toast-message.is-hidden');
-
-                if (allAlerts.length === hiddenAlerts.length) {
-                    container.innerHTML = '';
-                }
-            }, { once: true });
-        }
-
-        // 显示自定义 Flash 消息
-        function showFlashMessage(message, type = 'info') {
+        // 显示自定义 Flash 消息 (Toast)
+        function showToast(message, type = 'info') {
+            console.log('Showing Toast:', message);
             var container = document.getElementById('flashMessages');
+            if (!container) {
+                console.error('Toast container not found! Creating fallback...');
+                container = document.createElement('div');
+                container.id = 'flashMessages';
+                document.body.appendChild(container); // Append first
+            }
+
+            // Dynamic positioning based on navbar height
+            var nav = document.querySelector('.navbar');
+            var topPos = nav ? nav.offsetHeight : 20;
+
+            // ALWAYS force container styles inline to guarantee visibility/positioning
+            container.className = 'flash-messages';
+            // Reduced gap from 10px to 6px; Top aligned using dynamic calculation; Right aligned with navbar padding (1rem=16px)
+            container.style.cssText = `position: fixed; top: ${topPos}px; right: 16px; z-index: 2147483647; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; pointer-events: none;`;
+
             var alert = document.createElement('div');
             alert.className = `toast-message ${type}`;
             alert.textContent = message;
+
+            // Reinforced Visibility, CSS handles theme colors
+            // Explicitly override margin-bottom to 0 to prevent style.css from adding 10px
+            alert.style.cssText = `
+                background-color: var(--white); 
+                color: var(--text-main); 
+                padding: 1rem 1.5rem; 
+                border-radius: 12px; 
+                box-shadow: var(--shadow-md); 
+                font-weight: 500; 
+                display: flex; 
+                align-items: center; 
+                pointer-events: auto; 
+                opacity: 1 !important; 
+                visibility: visible !important; 
+                margin-bottom: 0 !important;
+            `;
+
             container.appendChild(alert);
 
+            // Auto-dismiss logic
             setTimeout(function () {
-                dismissAlert(alert);
+                // Restore "Original" Animation: Float up significantly (-20px) with smooth easing
+                alert.style.transition = "opacity 0.6s ease-out, transform 0.6s ease-out";
+                alert.style.opacity = "0";
+                alert.style.transform = "translateY(-20px)";
+
+                // After animation, hide but KEEP SPACE (prevent jump)
+                setTimeout(() => {
+                    alert.style.visibility = 'hidden';
+                    alert.classList.add('dismissed');
+
+                    // Check if we can clean up the whole stack
+                    const allToasts = container.querySelectorAll('.toast-message');
+                    const activeToasts = Array.from(allToasts).filter(el => !el.classList.contains('dismissed'));
+
+                    if (activeToasts.length === 0) {
+                        console.log('All toasts dismissed, resetting stack');
+                        container.innerHTML = '';
+                    }
+                }, 600); // Match transition duration
             }, 3000);
         }
 
-        // 通用登录表单处理函数
+        // Generic login form handler
         function handleLoginSubmit(event) {
             event.preventDefault();
             var form = event.target;
-            var usernameInput = form.querySelector('input[name="username"]');
-            var passwordInput = form.querySelector('input[name="password"]');
 
-            if (!usernameInput.value.trim()) {
-                showFlashMessage('请输入用户名');
-                usernameInput.focus();
+            // Access elements directly via form.elements
+            var username = form.username.value;
+            var password = form.password.value;
+
+            if (!username || !username.trim()) {
+                showToast('请输入用户名');
+                if (form.username) form.username.focus();
                 return;
             }
-            if (!passwordInput.value.trim()) {
-                showFlashMessage('请输入密码');
-                passwordInput.focus();
+            if (!password || !password.trim()) {
+                showToast('请输入密码');
+                if (form.password) form.password.focus();
                 return;
             }
 
@@ -434,97 +343,47 @@
                     if (data.success) {
                         window.location.href = data.redirect_url;
                     } else {
-                        showFlashMessage(data.message);
-                        passwordInput.value = '';
-                        passwordInput.focus();
+                        showToast(data.message);
+                        if (form.password) {
+                            form.password.value = '';
+                            form.password.focus();
+                        }
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    showFlashMessage('登录请求失败，请稍后重试');
+                    console.error('Login Error:', error);
+                    showToast('登录请求失败，请稍后重试');
                 });
         }
 
         // 绑定登录表单事件
-        document.getElementById('loginForm')?.addEventListener('submit', handleLoginSubmit);
-        document.getElementById('mobileLoginForm')?.addEventListener('submit', handleLoginSubmit);
+        document.getElementById('loginFormModal')?.addEventListener('submit', handleLoginSubmit);
 
-        // 展开登录框 (区分移动端和桌面端)
-        function expandLogin(event) {
-            event.stopPropagation();
+        // 打开统一登录模态框
+        function openLoginModal(event) {
+            if (event) event.stopPropagation();
+            document.getElementById('loginModal').classList.add('active');
+            // Auto focus
+            setTimeout(() => {
+                const usernameInput = document.querySelector('#loginFormModal input[name="username"]');
+                usernameInput.focus();
 
-            // 使用 matchMedia 进行更准确的媒体查询匹配
-            if (window.matchMedia('(max-width: 768px)').matches) {
-                // 移动端：显示模态框
-                document.getElementById('mobileLoginModal').classList.add('active');
-                // 自动聚焦
-                setTimeout(() => {
-                    document.querySelector('#mobileLoginForm input[name="username"]').focus();
-                }, 100);
-            } else {
-                // 桌面端：原有逻辑
-                var inputs = document.getElementById('loginInputs');
-                var expandBtn = document.getElementById('loginExpandBtn');
-                var submitBtn = document.getElementById('loginSubmitBtn');
-                var form = document.getElementById('loginForm');
-                var usernameInput = inputs.querySelector('input[name="username"]');
-                var passwordInput = inputs.querySelector('input[name="password"]');
+                // Restore from localStorage
+                const saved = localStorage.getItem('fuyou_username');
+                if (saved && !usernameInput.value) {
+                    usernameInput.value = saved;
+                }
 
-                // 确保移动端模态框关闭
-                document.getElementById('mobileLoginModal').classList.remove('active');
-
-                inputs.classList.add('active');
-                form.classList.add('active');
-                expandBtn.style.display = 'none';
-                submitBtn.style.display = 'block';
-
-                usernameInput.disabled = false;
-                passwordInput.disabled = false;
-                setTimeout(() => {
-                    usernameInput.focus();
-                    // Restore from localStorage
-                    const saved = localStorage.getItem('fuyou_username');
-                    if (saved && !usernameInput.value) {
-                        usernameInput.value = saved;
-                    }
-                }, 100);
-
-                // Add listener to save input
+                // Save on input
                 usernameInput.addEventListener('input', (e) => {
                     localStorage.setItem('fuyou_username', e.target.value);
                 });
-            }
+            }, 100);
         }
 
-        // 关闭移动端登录模态框
-        function closeMobileLogin() {
-            document.getElementById('mobileLoginModal').classList.remove('active');
-        }
-
-        // 重置登录框状态 (桌面端)
-        function resetLogin() {
-            var inputs = document.getElementById('loginInputs');
-            var expandBtn = document.getElementById('loginExpandBtn');
-            var submitBtn = document.getElementById('loginSubmitBtn');
-            var form = document.getElementById('loginForm');
-
-            if (inputs && inputs.classList.contains('active')) {
-                var usernameInput = inputs.querySelector('input[name="username"]');
-                var passwordInput = inputs.querySelector('input[name="password"]');
-
-                inputs.classList.remove('active');
-                form.classList.remove('active');
-                submitBtn.style.display = 'none';
-                expandBtn.style.display = 'block';
-
-                usernameInput.disabled = true;
-                passwordInput.disabled = true;
-                usernameInput.disabled = true;
-                passwordInput.disabled = true;
-                // Removed clearing of values to persist input on accidental close
-                // usernameInput.value = '';
-                // passwordInput.value = '';
-            }
+        // 关闭统一登录模态框
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.remove('active');
         }
 
         // 用户下拉菜单交互
@@ -544,19 +403,20 @@
             event.preventDefault();
             event.stopPropagation();
             document.getElementById('themeModal').classList.add('active');
-
-            // Highlight current selection
             updateThemeUIState();
-
-            // Close dropdown
             document.getElementById('userDropdown').classList.remove('show');
             document.getElementById('userMenu').classList.remove('active');
         }
 
         function closeThemeModal() {
             document.getElementById('themeModal').classList.remove('active');
-            // Revert to saved state if cancelled? For now, we keep live preview.
-            // Or maybe we should revert if not saved. Let's assume live preview is desired.
+        }
+
+        function updateThemeMeta() {
+            const metaThemeColor = document.querySelector("meta[name=theme-color]");
+            if (metaThemeColor) {
+                metaThemeColor.setAttribute("content", currentMode === 'dark' ? '#000000' : '#ffffff');
+            }
         }
 
         function setThemeMode(mode) {
@@ -564,6 +424,7 @@
             document.body.classList.remove('light', 'dark');
             document.body.classList.add(mode);
             updateThemeUIState();
+            updateThemeMeta();
         }
 
         function setThemeColor(color) {
@@ -574,17 +435,13 @@
         }
 
         function updateThemeUIState() {
-            // Update Mode Buttons
             document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('btn-mode-' + currentMode).classList.add('active');
-
-            // Update Color Options
+            document.getElementById('btn-mode-' + currentMode)?.classList.add('active');
             document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('active'));
-            document.querySelector('.color-option.theme-' + currentColor).classList.add('active');
+            document.querySelector('.color-option.theme-' + currentColor)?.classList.add('active');
         }
 
         function saveThemeSettings() {
-            // Save to server
             fetch('/api/update_theme', {
                 method: 'POST',
                 headers: {
@@ -599,21 +456,18 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showFlashMessage('显示设置已保存');
+                        showToast('显示设置已保存');
                         closeThemeModal();
                     } else {
-                        showFlashMessage('保存失败: ' + (data.error || '未知错误'));
+                        showToast('保存失败: ' + (data.error || '未知错误'));
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // Even if server fails (e.g. not logged in), we save locally
-                    showFlashMessage('设置已应用');
+                    showToast('设置已应用');
                     closeThemeModal();
                 });
 
-            // Save to cookies for persistence after logout
-            // Set cookie for 30 days
             const d = new Date();
             d.setTime(d.getTime() + (30 * 24 * 60 * 60 * 1000));
             let expires = "expires=" + d.toUTCString();
@@ -621,48 +475,70 @@
             document.cookie = "theme_color=" + currentColor + ";" + expires + ";path=/";
         }
 
-        // 点击外部关闭所有弹窗
+        // Dropdown Alignment Logic (Pixel Perfect)
+        function alignDropdown() {
+            const nav = document.querySelector('.navbar');
+            const menu = document.querySelector('.user-menu');
+            if (nav && menu) {
+                const navRect = nav.getBoundingClientRect();
+                const menuRect = menu.getBoundingClientRect();
+                // Calculate distance from menu bottom to navbar bottom
+                const offset = navRect.bottom - menuRect.bottom;
+                // Apply to CSS variable (default 18px if calculation fails)
+                menu.style.setProperty('--dropdown-top-offset', (offset > 0 ? offset : 0) + 'px');
+            }
+        }
+
+        // Click outside to close (Updated with alignment check)
         window.onclick = function (event) {
-            if (!event.target.closest('.user-menu')) {
-                var menu = document.getElementById('userMenu');
-                var dropdown = document.getElementById('userDropdown');
-                if (dropdown && dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                    menu.classList.remove('active');
+            var menu = document.getElementById('userMenu');
+            var dropdown = document.getElementById('userDropdown');
+            if (menu && dropdown) {
+                if (!event.target.closest('.user-menu')) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                        menu.classList.remove('active');
+                    }
                 }
             }
-
-            if (!event.target.closest('.login-wrapper')) {
-                resetLogin();
-            }
-
-            // 点击模态框背景关闭
-            var modal = document.getElementById('mobileLoginModal');
-            if (event.target === modal) {
-                closeMobileLogin();
-            }
-
             var themeModal = document.getElementById('themeModal');
-            if (event.target === themeModal) {
+            if (themeModal && event.target === themeModal) {
                 closeThemeModal();
             }
         }
 
-        // Flash 消息 5秒后自动消失
+        // Initialize Alignment
+        window.addEventListener('resize', alignDropdown);
+        document.addEventListener('DOMContentLoaded', alignDropdown);
+        // Also recalculate when opening
+        const originalToggle = toggleUserDropdown;
+        toggleUserDropdown = function (event) {
+            alignDropdown();
+            originalToggle(event);
+        }
+
+        // Flash Message / Init Logic
         document.addEventListener('DOMContentLoaded', function () {
-            var alerts = document.querySelectorAll('.alert');
-            if (alerts.length > 0) {
+            // Apply "float away" animation to existing toasts from server
+            var toasts = document.querySelectorAll('.toast-message');
+            if (toasts.length > 0) {
                 setTimeout(function () {
-                    alerts.forEach(function (alert) {
-                        dismissAlert(alert);
+                    toasts.forEach(function (alert) {
+                        alert.style.transition = "opacity 0.6s ease-out, transform 0.6s ease-out";
+                        alert.style.opacity = "0";
+                        alert.style.transform = "translateY(-20px)";
+                        setTimeout(() => {
+                            alert.style.visibility = 'hidden';
+                        }, 600);
                     });
-                }, 5000);
+                }, 3000);
             }
 
             // Initialize UI state
             updateThemeUIState();
+            updateThemeMeta();
 
-            // If user is logged in, sync their DB settings to cookies so they persist after logout
+            // Sync auth settings
             {% if current_user.is_authenticated %}
             const d = new Date();
             d.setTime(d.getTime() + (30 * 24 * 60 * 60 * 1000));
@@ -672,22 +548,19 @@
             {% endif %}
         });
 
-        // Navbar Toggle Logic
         function toggleNavbar() {
             const nav = document.getElementById('navbarNav');
             nav.classList.toggle('show');
         }
 
-        // Close navbar when clicking outside
         document.addEventListener('click', function (event) {
             const nav = document.getElementById('navbarNav');
             const toggle = document.querySelector('.navbar-toggle');
-            if (nav.classList.contains('show') && !nav.contains(event.target) && !toggle.contains(event.target)) {
+            if (nav && nav.classList.contains('show') && !nav.contains(event.target) && !toggle.contains(event.target)) {
                 nav.classList.remove('show');
             }
         });
 
-        // GENERIC Action Bar Toggle (Fallback for pages without specific IDs)
         function toggleActions() {
             const actions = document.querySelector('.action-bar');
             if (actions) {
@@ -695,12 +568,10 @@
             }
         }
 
-        // Close Action Bar when clicking outside
         document.addEventListener('click', function (event) {
             const actions = document.querySelector('.action-bar');
             const toggle = document.querySelector('.action-toggle-btn');
             if (actions && actions.classList.contains('show')) {
-                // Check if click is outside actions AND outside toggle
                 if (!actions.contains(event.target) && (!toggle || !toggle.contains(event.target))) {
                     actions.classList.remove('show');
                 }
